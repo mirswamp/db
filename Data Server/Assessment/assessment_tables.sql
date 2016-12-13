@@ -14,7 +14,7 @@ CREATE TABLE assessment_run (
   assessment_run_id         INT  NOT NULL AUTO_INCREMENT                 COMMENT 'internal id',
   assessment_run_uuid       VARCHAR(45) NOT NULL                         COMMENT 'assessment run uuid',
   project_uuid              VARCHAR(45) NOT NULL                         COMMENT 'owned by a project',
-  platform_uuid             VARCHAR(45) NOT NULL                         COMMENT 'specifies one platform',
+  platform_uuid             VARCHAR(45)                                  COMMENT 'if null, then default platform',
   tool_uuid                 VARCHAR(45) NOT NULL                         COMMENT 'specifies one tool',
   package_uuid              VARCHAR(45) NOT NULL                         COMMENT 'specifies one package',
   platform_version_id       INT                                          COMMENT 'if null, then most recent',

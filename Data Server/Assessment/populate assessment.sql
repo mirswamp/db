@@ -5,7 +5,7 @@
 
 use assessment;
 
-insert into database_version (database_version_no, description) values (50, 'setup');
+insert into database_version (database_version_no, description) values (52, 'setup');
 commit;
 
 insert into run_request (run_request_uuid, project_uuid, name, description) values ('6bef7825-1b2d-11e3-af14-001a4a81450b', ' ', 'One-time', 'Run once as soon as possible');

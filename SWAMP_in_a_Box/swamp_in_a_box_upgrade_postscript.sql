@@ -3,5 +3,5 @@
 #
 # Copyright 2012-2016 Software Assurance Marketplace
 
-# disable metric runs
-ALTER EVENT metric.initiate_metric_runs DISABLE; # disables M-Runs
+# Disable metric runs
+ALTER EVENT metric.initiate_metric_runs DISABLE;

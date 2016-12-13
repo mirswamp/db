@@ -33,8 +33,8 @@ use metric;
         insert into metric.metric_tool_version
           (metric_tool_version_uuid, metric_tool_uuid, version_no, version_string, tool_path, checksum)
         values
-        ('129d61a0-3e40-11e6-a6cc-001a4a81450b','0726f1df-3e40-11e6-a6cc-001a4a81450b', 1, '1.64', '/swamp/store/SCATools/cloc/cloc-1.64-3.tar',
-        '30006a1eb5899ab9957010c3acf4c76715a6e4e8445ad8b6296a7e637d2e2f8d0359c39e21dd68c70d811610786b068f7204dbec59a5eb19c2be6c7f6fb65126');
+        ('129d61a0-3e40-11e6-a6cc-001a4a81450b','0726f1df-3e40-11e6-a6cc-001a4a81450b', 1, '1.68', '/swamp/store/SCATools/cloc/cloc-1.68.tar',
+        'c49769222abb157083256750ba4ece3b7040cee40ed046ec5b939fe351aab542fb5bbfead91161ccff9c5741449f6e344006b272583bbb13db708409cd27c6c0');
 
         insert into metric.metric_tool_language (metric_tool_uuid, package_type_id) values ('0726f1df-3e40-11e6-a6cc-001a4a81450b', 1);  # C/C++
         insert into metric.metric_tool_language (metric_tool_uuid, package_type_id) values ('0726f1df-3e40-11e6-a6cc-001a4a81450b', 2);  # Java 7 Source Code
@@ -77,8 +77,8 @@ use metric;
         insert into metric.metric_tool_version
           (metric_tool_version_uuid, metric_tool_uuid, version_no, version_string, tool_path, checksum)
         values
-        ('a6e4d49b-3e43-11e6-a6cc-001a4a81450b','9692f64b-3e43-11e6-a6cc-001a4a81450b', 1, '1.10.4', '/swamp/store/SCATools/lizard/lizard-1.10.4-3.tar',
-        '29c8691399e5fd56e8a460b32966f2d2264263da3cad0fe3e5b2dfcfe84061f70433c543183ce943f69c2c794011adb9739835c44ccba5cbcd23946f8b92a3c0');
+        ('a6e4d49b-3e43-11e6-a6cc-001a4a81450b','9692f64b-3e43-11e6-a6cc-001a4a81450b', 1, '1.12.6', '/swamp/store/SCATools/lizard/lizard-1.12.6.tar.gz',
+        'ba04a305549e65d730890ca5a3db0677baa0f1a1a09eed4b0d2740ca79038c56fae5cfda0ff96424da66b801749084423b582cb415d9d2e79fbdeebd84866b47');
 
         insert into metric.metric_tool_language (metric_tool_uuid, package_type_id) values ('9692f64b-3e43-11e6-a6cc-001a4a81450b', 1);  # C/C++
         insert into metric.metric_tool_language (metric_tool_uuid, package_type_id) values ('9692f64b-3e43-11e6-a6cc-001a4a81450b', 2);  # Java 7 Source Code

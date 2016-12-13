@@ -53,21 +53,31 @@ delete from tool_shed.tool where tool_uuid = '738b81f0-a828-11e5-865f-001a4a8145
 # Disable metric runs
 ALTER EVENT metric.initiate_metric_runs DISABLE; # disables M-Runs
 
-# Set up package types
-update package_store.package_type set platform_user_selectable = 1;
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 1; # C/C++           - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 2; # Java 7 Src Code - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 3; # Java 7 Bytecode - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 4; # Python2         - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 5; # Python3         - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 6; # Android JavaSrc - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 7; # Ruby            - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 8; # Ruby Sinatra    - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 9; # Ruby on Rails   - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 10;# Ruby Padrino    - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 11;# Android .apk    - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 12;# Java 8 Src Code - Scientific Linux 64-bit
-update package_store.package_type set default_platform_uuid = 'd95fcb5f-209d-11e3-9a3e-001a4a81450b' where package_type_id = 13;# Java 8 Bytecode - Scientific Linux 64-bit
-update package_store.package_type set package_type_enabled = 0 where package_type_id in (6,11); # Android languages disabled
-update package_store.package_type set platform_user_selectable = 1 where package_type_id = 1; # Platform user selectable for C/C++
-update package_store.package_type set platform_user_selectable = 0 where package_type_id in (2,3,4,5,6,7,8,9,10,11,12,13); # Platform not user selectable for all other languages
+# Set platform not user selectable
+  # By default, swamp in a box only comes with one platform. So, the platform isnt user selectable
+  # If additional platforms are installed, the platform install script changes this flag.
+update package_store.package_type set platform_user_selectable = 0;
+
+# Set Default platforms for package type
+  # All default to Ubuntu Linux (1088c3ce-20aa-11e3-9a3e-001a4a81450b)
+  # except Android (6,11) which defaults to Android (48f9a9b0-976f-11e4-829b-001a4a81450b)
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 1; # C/C++           - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 2; # Java 7 Src Code - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 3; # Java 7 Bytecode - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 4; # Python2         - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 5; # Python3         - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '48f9a9b0-976f-11e4-829b-001a4a81450b' where package_type_id = 6; # Android JavaSrc - Android
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 7; # Ruby            - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 8; # Ruby Sinatra    - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 9; # Ruby on Rails   - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 10;# Ruby Padrino    - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '48f9a9b0-976f-11e4-829b-001a4a81450b' where package_type_id = 11;# Android .apk    - Android
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 12;# Java 8 Src Code - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 13;# Java 8 Bytecode - Ubuntu Linux
+
+# Disable Android Pkg Type
+update package_store.package_type set package_type_enabled = 0 where package_type_id in (6,11);
+
+# setup system_type
+insert into assessment.system_setting (system_setting_code, system_setting_value) values ('SYSTEM_TYPE', 'SWAMP_IN_A_BOX');
+

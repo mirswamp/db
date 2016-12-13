@@ -193,26 +193,26 @@ CREATE PROCEDURE insert_results (
         set result_chmod_return_code = sys_exec(cmd);
 
         # cp and chmod log file
-        set cmd = null;
-        set cmd = CONCAT('cp ', log_path_in, ' ', concat(result_dest_path,log_filename));
-        set log_move_return_code = sys_exec(cmd);
-        set cmd = null;
-        set cmd = CONCAT('chmod 444 ', concat(result_dest_path,log_filename));
-        set log_chmod_return_code = sys_exec(cmd);
+        #set cmd = null;
+        #set cmd = CONCAT('cp ', log_path_in, ' ', concat(result_dest_path,log_filename));
+        #set log_move_return_code = sys_exec(cmd);
+        #set cmd = null;
+        #set cmd = CONCAT('chmod 444 ', concat(result_dest_path,log_filename));
+        #set log_chmod_return_code = sys_exec(cmd);
 
         # Confirm file moves, then insert result record and return success.
         if result_mkdir_return_code     != 0 then set return_string = 'ERROR MKDIR RESULT FILE';
         elseif result_mv_return_code    != 0 then set return_string = 'ERROR MOVING RESULT FILE';
         elseif result_chmod_return_code != 0 then set return_string = 'ERROR CHMOD RESULT FILE';
-        elseif log_move_return_code     != 0 then set return_string = 'ERROR MOVING LOG FILE';
-        elseif log_chmod_return_code    != 0 then set return_string = 'ERROR CHMOD LOG FILE';
+        #elseif log_move_return_code     != 0 then set return_string = 'ERROR MOVING LOG FILE';
+        #elseif log_chmod_return_code    != 0 then set return_string = 'ERROR CHMOD LOG FILE';
         else begin
           update metric.metric_run
              set file_host = 'SWAMP',
                  result_path = concat(result_dest_path,result_filename),
-                 result_checksum = result_checksum_in,
-                 log_path = concat(result_dest_path,log_filename),
-                 log_checksum = log_checksum_in
+                 result_checksum = result_checksum_in
+                 #,log_path = concat(result_dest_path,log_filename),
+                 #log_checksum = log_checksum_in
             where metric_run_uuid = metric_run_uuid_in;
             set return_string = 'SUCCESS';
           end;

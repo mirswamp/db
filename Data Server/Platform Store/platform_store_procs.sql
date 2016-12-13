@@ -70,8 +70,7 @@ use platform_store;
                platform_version.deployment_cmd
           from platform
          inner join platform_version on platform.platform_uuid = platform_version.platform_uuid
-         where platform.platform_sharing_status = 'PUBLIC'
-           and platform_version.release_date is not null;
+         where platform.platform_sharing_status = 'PUBLIC';
     END
     $$
     DELIMITER ;

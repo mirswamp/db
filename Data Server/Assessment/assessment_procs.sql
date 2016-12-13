@@ -60,7 +60,8 @@ CREATE PROCEDURE select_execution_record (
                completion_date,
                execute_node_architecture_id,
                lines_of_code,
-               cpu_utilization
+               cpu_utilization,
+               'METRIC' as user_uuid
           from metric.metric_run
          where metric_run_uuid = execution_record_uuid_in;
        else
@@ -74,7 +75,8 @@ CREATE PROCEDURE select_execution_record (
                completion_date,
                execute_node_architecture_id,
                lines_of_code,
-               cpu_utilization
+               cpu_utilization,
+               user_uuid
           from execution_record
          where execution_record_uuid = execution_record_uuid_in;
     end if;
@@ -98,6 +100,7 @@ CREATE PROCEDURE create_execution_record (
   BEGIN
     DECLARE assessment_row_count_int int;
     DECLARE platform_row_count_int int;
+    DECLARE platform_version_row_count_int int;
     DECLARE tool_row_count_int int;
     DECLARE package_row_count_int int;
     DECLARE platform_uuid_var VARCHAR(45);
@@ -121,18 +124,6 @@ CREATE PROCEDURE create_execution_record (
       from assessment.assessment_run
      where assessment_run_uuid = assessment_run_uuid_in;
 
-    # if platform/tool/package version null, verify latest version exists
-        if platform_version_uuid_var is null then
-          select count(1)
-            into platform_row_count_int
-            from platform_store.platform_version
-           where platform_uuid = platform_uuid_var
-             and version_no = (select max(version_no)
-                                 from platform_store.platform_version
-                                where platform_uuid = platform_uuid_var)
-             ;
-        end if;
-
     if assessment_row_count_int > 1 then
       set return_string = 'ERROR: MULTIPLE ASSESSMENTS FOUND';
     elseif assessment_row_count_int = 0 then
@@ -150,16 +141,35 @@ CREATE PROCEDURE create_execution_record (
           from assessment.assessment_run
          where assessment_run_uuid = assessment_run_uuid_in;
 
+        # if platform null, get default
+        if platform_uuid_var is null then begin
+          select count(1)
+            into platform_row_count_int
+            from package_store.package_type pkg_t
+           inner join package_store.package pkg on pkg.package_type_id = pkg_t.package_type_id
+           inner join assessment.assessment_run ar on ar.package_uuid = pkg.package_uuid
+           where ar.assessment_run_uuid = assessment_run_uuid_in;
+           if platform_row_count_int > 0 then
+              select pkg_t.default_platform_uuid, pkg_t.default_platform_version_uuid
+                into platform_uuid_var, platform_version_uuid_var
+                from package_store.package_type pkg_t
+               inner join package_store.package pkg on pkg.package_type_id = pkg_t.package_type_id
+               inner join assessment.assessment_run ar on ar.package_uuid = pkg.package_uuid
+               where ar.assessment_run_uuid = assessment_run_uuid_in;
+           end if;
+         end;
+        end if;
+
         # if platform version null, get latest version
         if platform_version_uuid_var is null then begin
           select count(1)
-            into platform_row_count_int
+            into platform_version_row_count_int
             from platform_store.platform_version
            where platform_uuid = platform_uuid_var
              and version_no = (select max(version_no)
                                  from platform_store.platform_version
                                 where platform_uuid = platform_uuid_var);
-           if platform_row_count_int > 0 then
+           if platform_version_row_count_int > 0 then
               select max(platform_version_uuid)
                 into platform_version_uuid_var
                 from platform_store.platform_version
@@ -233,7 +243,9 @@ CREATE PROCEDURE create_execution_record (
          end;
         end if;
 
-        if platform_version_uuid_var is null then
+        if platform_uuid_var is null then
+          set return_string = 'ERROR: DEFAULT PLATFORM FOR PKG TYPE NOT FOUND';
+        elseif platform_version_uuid_var is null then
           set return_string = 'ERROR: LATEST PLATFORM VERSION NOT FOUND';
         elseif tool_version_uuid_var is null then
           set return_string = 'ERROR: LATEST TOOL VERSION NOT FOUND';
@@ -361,22 +373,25 @@ CREATE PROCEDURE validate_execution_record (
                )
            );
 
-    # if tool is Parasoft, verify project owner has permission and that the project can use it
-    if tool_version_uuid_var in ('0b384dc1-6441-11e4-a282-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b') then
+    # if tool is Parasoft, verify user has permission and signed EULA
+    if tool_version_uuid_var in ('0b384dc1-6441-11e4-a282-001a4a81450b','53fc0641-e094-11e5-ae56-001a4a81450b','92e94ec4-bf07-11e5-832a-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b','93334c42-e099-11e5-ae56-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b') then
       select 'Y'
         into parasoft_ok
-        from project.project p
-       inner join project.user_permission up on up.user_uid = p.project_owner_uid
-       inner join project.user_permission_project upp on upp.user_permission_uid = up.user_permission_uid
-       where p.project_uid = project_uuid_var
+        from project.user_permission up
+       inner join project.user_policy upp on upp.user_uid = up.user_uid
+       where up.user_uid = user_uuid_var
          and (
-              (tool_version_uuid_var = '0b384dc1-6441-11e4-a282-001a4a81450b' and up.permission_code = 'parasoft-user-c-test') or
-              (tool_version_uuid_var = '18532f08-6441-11e4-a282-001a4a81450b' and up.permission_code = 'parasoft-user-j-test')
+              (tool_version_uuid_var    in ('0b384dc1-6441-11e4-a282-001a4a81450b','53fc0641-e094-11e5-ae56-001a4a81450b','92e94ec4-bf07-11e5-832a-001a4a81450b')
+                 and up.permission_code = 'parasoft-user-c-test'
+                 and upp.policy_code    = 'parasoft-user-c-test-policy') or
+              (tool_version_uuid_var    in ('18532f08-6441-11e4-a282-001a4a81450b','93334c42-e099-11e5-ae56-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b')
+                 and up.permission_code = 'parasoft-user-j-test'
+                 and upp.policy_code    = 'parasoft-user-j-test-policy')
              )
-         and up.grant_date is not null #granted
-         and up.delete_date is null #not revoked
+         and up.grant_date is not null  #granted
+         and up.delete_date is null     #not revoked
          and up.expiration_date > now() #hasn't expired
-         and upp.project_uid = p.project_uid; #parasoft active on this project
+         ;
     else
       set parasoft_ok = 'Y';
     end if;
@@ -761,8 +776,8 @@ CREATE PROCEDURE insert_results (
         elseif result_chmod_return_code != 0 then set return_string = 'ERROR CHMOD RESULT FILE';
         elseif source_mv_return_code    != 0 then set return_string = 'ERROR MOVING SOURCE FILE';
         elseif source_chmod_return_code != 0 then set return_string = 'ERROR CHMOD SOURCE FILE';
-        elseif log_move_return_code     != 0 then set return_string = 'ERROR MOVING LOG FILE';
-        elseif log_chmod_return_code    != 0 then set return_string = 'ERROR CHMOD LOG FILE';
+        #elseif log_move_return_code     != 0 then set return_string = 'ERROR MOVING LOG FILE';
+        #elseif log_chmod_return_code    != 0 then set return_string = 'ERROR CHMOD LOG FILE';
         else begin
             # Note: no longer attempting to remove files from the working directory.
 
