@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use project;
 
@@ -74,10 +74,9 @@ update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e
 update package_store.package_type set default_platform_uuid = '48f9a9b0-976f-11e4-829b-001a4a81450b' where package_type_id = 11;# Android .apk    - Android
 update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 12;# Java 8 Src Code - Ubuntu Linux
 update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 13;# Java 8 Bytecode - Ubuntu Linux
+update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 14;# Web Scripting   - Ubuntu Linux
+update package_store.package_type set package_type_enabled = 0 where package_type_id in (6,11); # Android languages disabled
+update package_store.package_type set platform_user_selectable = 0; # Platform not user selectable for any languages
 
-# Disable Android Pkg Type
-update package_store.package_type set package_type_enabled = 0 where package_type_id in (6,11);
-
-# setup system_type
+# system_type
 insert into assessment.system_setting (system_setting_code, system_setting_value) values ('SYSTEM_TYPE', 'SWAMP_IN_A_BOX');
-

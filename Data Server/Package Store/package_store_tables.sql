@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists package_store;
@@ -16,6 +16,7 @@ CREATE TABLE package (
   name                    VARCHAR(100)  NOT NULL                       COMMENT 'package name',
   description             VARCHAR(500)                                 COMMENT 'description',
   package_type_id         INT                                          COMMENT 'package_type_id',
+  package_language        VARCHAR(200) NULL DEFAULT NULL               COMMENT 'languages package contains',
   package_sharing_status  VARCHAR(25) NOT NULL DEFAULT 'PRIVATE'       COMMENT 'private, shared, public or retired',
   external_url            VARCHAR(2000)                                COMMENT 'external url, eg GitHub',
   create_user             VARCHAR(25)                                  COMMENT 'db user that inserted record',
@@ -58,6 +59,7 @@ CREATE TABLE package_version (
   language_version       VARCHAR(25) NULL DEFAULT NULL       COMMENT 'version of language',
   maven_version          VARCHAR(25) NULL DEFAULT NULL       COMMENT 'maven-version',
   android_maven_plugin   VARCHAR(255) NULL DEFAULT NULL      COMMENT 'android-maven-plugin',
+  checkout_argument      VARCHAR(100) NULL DEFAULT NULL      COMMENT 'git checkout argument',
   create_user            VARCHAR(25)                         COMMENT 'user that inserted record',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user            VARCHAR(25)                         COMMENT 'user that last updated record',

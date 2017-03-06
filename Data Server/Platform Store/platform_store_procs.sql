@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use platform_store;
 
@@ -31,7 +31,7 @@ CREATE TRIGGER platform_version_BINS BEFORE INSERT ON platform_version FOR EACH 
       from platform_version where platform_uuid = NEW.platform_uuid;
     set NEW.create_user = user(),
         NEW.create_date = now(),
-        NEW.version_no = ifnull(max_version_no,0)+1;
+        NEW.version_no = case when NEW.version_no is null then ifnull(max_version_no,0)+1 else NEW.version_no end;
   end;
 $$
 

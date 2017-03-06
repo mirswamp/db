@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 source 1.sql
 call assessment.upgrade_1 ();
@@ -208,3 +208,7 @@ drop PROCEDURE if exists assessment.upgrade_51;
 source 52.sql
 call assessment.upgrade_52 ();
 drop PROCEDURE if exists assessment.upgrade_52;
+
+source 53.sql
+call assessment.upgrade_53 ();
+drop PROCEDURE if exists assessment.upgrade_53;

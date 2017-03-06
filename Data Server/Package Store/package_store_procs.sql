@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use package_store;
 
@@ -72,7 +72,7 @@ CREATE TRIGGER package_version_BINS BEFORE INSERT ON package_version FOR EACH RO
       from package_version where package_uuid = NEW.package_uuid;
     set NEW.create_user = user(),
         NEW.create_date = now(),
-        NEW.version_no = ifnull(max_version_no,0)+1,
+        NEW.version_no = case when NEW.version_no is null then ifnull(max_version_no,0)+1 else NEW.version_no end,
         NEW.version_string = case when NEW.version_string is null then CAST((ifnull(max_version_no,0)+1) as CHAR(100))
                                   when NEW.version_string = ''    then CAST((ifnull(max_version_no,0)+1) as CHAR(100))
                                   else NEW.version_string end;
@@ -625,7 +625,8 @@ CREATE PROCEDURE select_pkg_version (
            package_version.use_gradle_wrapper,
            package_version.language_version,
            package_version.maven_version,
-           package_version.android_maven_plugin
+           package_version.android_maven_plugin,
+           package.package_language
       from package
      inner join package_version on package.package_uuid = package_version.package_uuid
      where package_version.package_version_uuid = package_version_uuid_in;

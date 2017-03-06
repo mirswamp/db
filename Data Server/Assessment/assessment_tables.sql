@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists assessment;
@@ -97,7 +97,7 @@ CREATE TABLE execution_record (
   platform_version_uuid        VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
   tool_version_uuid            VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
   package_version_uuid         VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
-  status                       VARCHAR(25) NOT NULL DEFAULT 'SCHEDULED'     COMMENT 'status of execution record',
+  status                       VARCHAR(100) NOT NULL DEFAULT 'WAITING TO START' COMMENT 'status of execution record',
   run_date                     TIMESTAMP NULL DEFAULT NULL                  COMMENT 'run begin timestamp',
   completion_date              TIMESTAMP NULL DEFAULT NULL                  COMMENT 'run completion timestamp',
   queued_duration              VARCHAR(12)                                  COMMENT 'string run date minus create date',
@@ -109,6 +109,8 @@ CREATE TABLE execution_record (
   vm_username                  VARCHAR(50)                                  COMMENT 'vm ssh username',
   vm_password                  VARCHAR(50)                                  COMMENT 'vm ssh password',
   vm_ip_address                VARCHAR(50)                                  COMMENT 'vm ip address',
+  vm_image                     VARCHAR(100)                                 COMMENT 'vm image',
+  tool_filename                VARCHAR(100)                                 COMMENT 'tool filename',
   create_user                  VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user                  VARCHAR(25)                                  COMMENT 'db user that last updated record',

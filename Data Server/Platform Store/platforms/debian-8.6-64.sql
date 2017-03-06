@@ -3,7 +3,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 # Insert platform if it doesn't already exist
 select count(1) into @platform_already_exists from platform_store.platform where platform_uuid = 'ee2c1193-209b-11e3-9a3e-001a4a81450b';
@@ -16,7 +16,7 @@ EXECUTE stmt1;
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = '0cda9b68-7c3c-11e6-88bc-001a4a81450b';
 INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
-  ('ee2c1193-209b-11e3-9a3e-001a4a81450b','0cda9b68-7c3c-11e6-88bc-001a4a81450b',2,'8.5 64-bit','debian-8.5-64');
+  ('ee2c1193-209b-11e3-9a3e-001a4a81450b','0cda9b68-7c3c-11e6-88bc-001a4a81450b',2,'8.6 64-bit','debian-8.6-64');
 
 # platform tool compatibilities
   # Most platforms work with all non-android tools

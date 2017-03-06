@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use assessment;
 
@@ -252,7 +252,7 @@ CREATE PROCEDURE create_execution_record (
         elseif package_version_uuid_var is null then
           set return_string = 'ERROR: LATEST PACKAGE VERSION NOT FOUND';
         else begin
-          # status will default to 'SCHEDULED'
+          # status will default to 'WAITING TO START'
           insert into execution_record (
               execution_record_uuid,
               assessment_run_uuid,
@@ -293,7 +293,7 @@ DELIMITER $$
 ##########################################
 CREATE PROCEDURE validate_execution_record (
     IN execution_record_uuid_in VARCHAR(45),
-    OUT return_code CHAR(1)
+    OUT return_code VARCHAR(100)
   )
   BEGIN
     DECLARE project_uuid_var          VARCHAR(45);
@@ -396,30 +396,35 @@ CREATE PROCEDURE validate_execution_record (
       set parasoft_ok = 'Y';
     end if;
 
-    # if tool is GrammaTech CodeSonar, verify project owner has permission and that the project can use it
+    # if tool is GrammaTech CodeSonar, verify user has permission and signed EULA
     if tool_version_uuid_var in ('68f4a0c7-72b2-11e5-865f-001a4a81450b') then
       select 'Y'
         into grammatech_ok
-        from project.project p
-       inner join project.user_permission up on up.user_uid = p.project_owner_uid
-       inner join project.user_permission_project upp on upp.user_permission_uid = up.user_permission_uid
-       where p.project_uid = project_uuid_var
+        from project.user_permission up
+       inner join project.user_policy upp on upp.user_uid = up.user_uid
+       where up.user_uid = user_uuid_var
          and up.permission_code = 'codesonar-user'
-         and up.grant_date is not null #granted
-         and up.delete_date is null #not revoked
+         and upp.policy_code    = 'codesonar-user-policy'
+         and up.grant_date is not null  #granted
+         and up.delete_date is null     #not revoked
          and up.expiration_date > now() #hasn't expired
-         and upp.project_uid = p.project_uid; #grammatech active on this project
+         ;
     else
       set grammatech_ok = 'Y';
     end if;
 
-    # return Y or N
     if (user_ok = 'Y' and project_ok = 'Y' and platform_ok = 'Y' and tool_ok = 'Y' and package_ok = 'Y' and parasoft_ok = 'Y' and grammatech_ok = 'Y')
-    then
-      set return_code = 'Y';
-    else
-      set return_code = 'N';
+      then set return_code = 'Y';
+    elseif user_ok       is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: USER ACCT DISABLED';
+    elseif project_ok    is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PROJECT DISABLED';
+    elseif platform_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PLATFORM NOT AVAILABLE';
+    elseif tool_ok       is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: TOOL NOT AVAILABLE';
+    elseif package_ok    is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PACKAGE NOT AVAILABLE';
+    elseif parasoft_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PARASOFT NOT AVAILABLE';
+    elseif grammatech_ok is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: CODESONAR NOT AVAILABLE';
+    else                             set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA';
     end if;
+
 
 END
 $$
@@ -466,6 +471,7 @@ CREATE PROCEDURE scheduler ()
     DECLARE return_var VARCHAR(100);
     DECLARE end_of_loop BOOL;
     DECLARE currently_running_scheduler VARCHAR(1);
+    DECLARE currently_running_scheduler_update_date TIMESTAMP;
     DECLARE cur1 CURSOR FOR
     select distinct ar.assessment_run_uuid, rr.run_request_uuid, arra.user_uuid, arra.notify_when_complete_flag
       from run_request_schedule rss
@@ -500,20 +506,20 @@ CREATE PROCEDURE scheduler ()
          commit;
     END;
 
-      select value
-        into currently_running_scheduler
+      select value, update_date
+        into currently_running_scheduler, currently_running_scheduler_update_date
         from system_status
        where status_key = 'CURRENTLY_RUNNING_SCHEDULER';
 
-      if currently_running_scheduler = 'Y' then
+      if currently_running_scheduler = 'Y' and TIMEDIFF(now(),currently_running_scheduler_update_date) < '00:05:00' then
         BEGIN
           insert into scheduler_log (msg) values ('Scheduler skipped because procedure is currently running.'); commit;
         END;
       else
 BEGIN
-
-    # Verbose logging for debugging
-    # insert into scheduler_log (msg) values ('Start'); commit;
+    if currently_running_scheduler = 'Y' and TIMEDIFF(now(),currently_running_scheduler_update_date) > '00:05:00' then
+      insert into scheduler_log (msg) values ('Scheduler running longer than 5 minutes.');
+     end if;
 
     # set flag CURRENTLY_RUNNING_SCHEDULER
     update system_status
@@ -544,7 +550,7 @@ BEGIN
     # workaround for server bug
     DO (SELECT 'nothing' FROM execution_record WHERE FALSE);
 
-    # set flag currently_processing_execution_records
+    # set flag CURRENTLY_RUNNING_SCHEDULER
     update system_status
        set value = 'N'
       where status_key = 'CURRENTLY_RUNNING_SCHEDULER';
@@ -563,13 +569,13 @@ DELIMITER $$
 CREATE PROCEDURE process_execution_records ()
   BEGIN
     DECLARE execution_record_uuid_var VARCHAR(45);
-    DECLARE validate_return_code CHAR(1);
+    DECLARE validate_return_code VARCHAR(100);
     DECLARE exec_return_code INT;
     DECLARE end_of_loop BOOL;
     DECLARE cur1 CURSOR FOR
     select execution_record_uuid
       from execution_record er
-     where status = 'SCHEDULED';
+     where status = 'WAITING TO START';
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND
         SET end_of_loop = TRUE;
@@ -594,18 +600,15 @@ CREATE PROCEDURE process_execution_records ()
         then
           begin
             call assessment.execute_execution_record(execution_record_uuid_var, exec_return_code);
-
-            # if execution started successfully, then set status = 'RUNNING'
-            # else, set status = 'ERROR'
             if exec_return_code = 0
             then
-              update execution_record set status = 'RUNNING' where execution_record_uuid = execution_record_uuid_var;
+              update execution_record set status = 'SUBMITTING TO HTCONDOR' where execution_record_uuid = execution_record_uuid_var;
             else
-              update execution_record set status = 'ERROR' where execution_record_uuid = execution_record_uuid_var;
+              update execution_record set status = 'FAILED TO START' where execution_record_uuid = execution_record_uuid_var;
             end if;
           end;
         else
-          update execution_record set status = 'INVALID' where execution_record_uuid = execution_record_uuid_var;
+          update execution_record set status = validate_return_code where execution_record_uuid = execution_record_uuid_var;
         end if;
 
     END LOOP;
@@ -833,7 +836,7 @@ DELIMITER $$
 ############################################
 CREATE PROCEDURE update_execution_run_status (
     IN execution_record_uuid_in VARCHAR(45),
-    IN status_in VARCHAR(25),
+    IN status_in VARCHAR(100),
     IN run_start_time_in TIMESTAMP,
     IN run_end_time_in TIMESTAMP,
     IN exec_node_architecture_id_in VARCHAR(128),
@@ -843,6 +846,8 @@ CREATE PROCEDURE update_execution_run_status (
     IN vm_username_in VARCHAR(50),
     IN vm_password_in VARCHAR(50),
     IN vm_ip_address_in VARCHAR(50),
+    IN vm_image_in VARCHAR(100),
+    IN tool_filename_in VARCHAR(100),
     OUT return_string varchar(100)
   )
   BEGIN
@@ -861,10 +866,10 @@ CREATE PROCEDURE update_execution_run_status (
 
         if row_count_int = 1 then
           BEGIN
-              # vm_ip_address is reported seperately
-              # So, if vm_ip_address_in is not null, then update only vm_ip_address
-              # else do the "regular" update
-              if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
+            # vm_ip_address is reported seperately
+            # So, if vm_ip_address_in is not null, then update only vm_ip_address
+            # else do the "regular" update
+            if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
               update metric.metric_run
                  set vm_ip_address = vm_ip_address_in
                where metric_run_uuid = execution_record_uuid_in;
@@ -879,8 +884,12 @@ CREATE PROCEDURE update_execution_run_status (
                      lines_of_code = lines_of_code_in,
                      cpu_utilization = cpu_utilization_in,
                      vm_password = vm_password_in,
-                     vm_hostname   = case when vm_hostname_in = '' then vm_hostname else vm_hostname_in end, #dont overwrite if incoming value is blank
-                     vm_username   = case when vm_username_in = '' then vm_username else vm_username_in end  #dont overwrite if incoming value is blank
+                     #dont overwrite if incoming value is blank
+                     vm_hostname   = case when vm_hostname_in   = '' then vm_hostname   else vm_hostname_in end,
+                     vm_username   = case when vm_username_in   = '' then vm_username   else vm_username_in end,
+                     vm_image      = case when vm_image_in      = '' then vm_image      else vm_image_in    end,
+                     vm_ip_address = case when vm_ip_address_in = '' then vm_ip_address else vm_username_in end,
+                     tool_filename = case when tool_filename_in = '' then tool_filename else tool_filename_in end
                where metric_run_uuid = execution_record_uuid_in;
             end if;
 
@@ -899,18 +908,18 @@ CREATE PROCEDURE update_execution_run_status (
 
       if row_count_int = 1 then
         BEGIN
-            # insert all incoming values into logging table. Useful for Debugging.
-            # insert into assessment.execution_run_status_log
-            #   (execution_record_uuid, status, run_start_time, run_end_time, exec_node_architecture_id,
-            #    lines_of_code, cpu_utilization, vm_hostname, vm_username, vm_password, vm_ip_address)
-            #   values
-            #   (execution_record_uuid_in, status_in, run_start_time_in, run_end_time_in, exec_node_architecture_id_in,
-            #    lines_of_code_in, cpu_utilization_in, vm_hostname_in, vm_username_in, vm_password_in, vm_ip_address_in);
+          # Verbose Logging
+          # insert into assessment.execution_run_status_log
+          #   (execution_record_uuid, status, run_start_time, run_end_time, exec_node_architecture_id,
+          #    lines_of_code, cpu_utilization, vm_hostname, vm_username, vm_password, vm_ip_address)
+          #   values
+          #   (execution_record_uuid_in, status_in, run_start_time_in, run_end_time_in, exec_node_architecture_id_in,
+          #    lines_of_code_in, cpu_utilization_in, vm_hostname_in, vm_username_in, vm_password_in, vm_ip_address_in);
 
-            # vm_ip_address is reported seperately
-            # So, if vm_ip_address_in is not null, then update only vm_ip_address
-            # else do the "regular" update
-            if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
+          # vm_ip_address is reported seperately
+          # So, if vm_ip_address_in is not null, then update only vm_ip_address
+          # else do the "regular" update
+          if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
             update assessment.execution_record
                set vm_ip_address = vm_ip_address_in
              where execution_record_uuid = execution_record_uuid_in;
@@ -925,8 +934,12 @@ CREATE PROCEDURE update_execution_run_status (
                    lines_of_code = lines_of_code_in,
                    cpu_utilization = cpu_utilization_in,
                    vm_password = vm_password_in,
-                   vm_hostname   = case when vm_hostname_in = '' then vm_hostname else vm_hostname_in end, #dont overwrite if incoming value is blank
-                   vm_username   = case when vm_username_in = '' then vm_username else vm_username_in end  #dont overwrite if incoming value is blank
+                   #dont overwrite if incoming value is blank
+                   vm_hostname   = case when vm_hostname_in   = '' then vm_hostname   else vm_hostname_in end,
+                   vm_username   = case when vm_username_in   = '' then vm_username   else vm_username_in end,
+                   vm_image      = case when vm_image_in      = '' then vm_image      else vm_image_in    end,
+                   vm_ip_address = case when vm_ip_address_in = '' then vm_ip_address else vm_username_in end,
+                   tool_filename = case when tool_filename_in = '' then tool_filename else tool_filename_in end
              where execution_record_uuid = execution_record_uuid_in;
           end if;
 
@@ -1680,14 +1693,23 @@ CREATE EVENT process_execution_records
   DO
     BEGIN
       DECLARE currently_processing_execution_records VARCHAR(1);
-      select value
-        into currently_processing_execution_records
+      DECLARE currently_processing_execution_records_update_date TIMESTAMP;
+
+      select value, update_date
+        into currently_processing_execution_records, currently_processing_execution_records_update_date
         from system_status
        where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
-      if currently_processing_execution_records != 'Y' then
-        CALL assessment.process_execution_records();
-      else
+
+      if currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) < '00:05:00' then
         insert into sys_exec_cmd_log (cmd, caller) values ('Call to procedure process_execution_records skipped because procedure is currently running.', 'process_execution_records');
+      elseif currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) > '00:05:00' then
+        begin
+          insert into sys_exec_cmd_log (cmd, caller) values ('process_execution_records running longer than 5 minutes.', 'process_execution_records');
+          update system_status set value = 'N' where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
+          CALL assessment.process_execution_records();
+        end;
+      else
+        CALL assessment.process_execution_records();
       end if;
 
 END
@@ -1866,11 +1888,8 @@ CREATE TRIGGER notification_AINS AFTER INSERT ON notification FOR EACH ROW
       from project.project
      where project_uid = project_uuid_var;
 
-    # lkup execution_record
-    select completion_date
-      into completion_date_var
-      from execution_record
-     where execution_record_uuid = execution_record_uuid_var;
+    # set completion_date
+    set completion_date_var = now();
 
     set cmd = null;
     set cmd = CONCAT(' /usr/local/bin/notify_user',

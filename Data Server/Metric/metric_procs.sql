@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use metric;
 
@@ -114,7 +114,7 @@ CREATE PROCEDURE create_metric_run (
       # Execute M-Run
       set cmd = CONCAT('/usr/local/bin/execute_execution_record ', metric_run_uuid_var);
       # Verbose Logging
-      insert into assessment.sys_exec_cmd_log (cmd, caller) values (cmd, 'create_metric_run');
+      # insert into assessment.sys_exec_cmd_log (cmd, caller) values (cmd, 'create_metric_run');
       # call external process
       set cmd_return_code = sys_exec(cmd);
       if cmd_return_code = 0
@@ -309,7 +309,7 @@ CREATE TRIGGER metric_tool_version_BINS BEFORE INSERT ON metric_tool_version FOR
       from metric_tool_version where metric_tool_uuid = NEW.metric_tool_uuid;
     set NEW.create_user = user(),
         NEW.create_date = now(),
-        NEW.version_no = ifnull(max_version_no,0)+1;
+        NEW.version_no = case when NEW.version_no is null then ifnull(max_version_no,0)+1 else NEW.version_no end;
   end;
 $$
 

@@ -1,11 +1,11 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 use project;
 
-insert into database_version (database_version_no, description) values (18, 'setup');
+insert into database_version (database_version_no, description) values (19, 'setup');
 commit;
 
 # linked_account_provider

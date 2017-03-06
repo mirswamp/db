@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2016 Software Assurance Marketplace
+# Copyright 2012-2017 Software Assurance Marketplace
 
 source 1.sql
 call project.upgrade_1 ();
@@ -75,3 +75,6 @@ source 18.sql
 call project.upgrade_18 ();
 drop PROCEDURE if exists project.upgrade_18;
 
+source 19.sql
+call project.upgrade_19 ();
+drop PROCEDURE if exists project.upgrade_19;
