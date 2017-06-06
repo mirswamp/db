@@ -18,17 +18,6 @@ delete from platform_store.platform_version where platform_version_uuid = 'f272a
 INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
   ('d531f0f0-f273-11e3-8775-001a4a81450b','f272a429-7c3d-11e6-88bc-001a4a81450b',1,'6.7 32-bit','rhel-6.7-32');
 
-# platform tool compatibilities
-  # Most platforms work with all non-android tools
-  # Android platform only works with android and java tools.
-delete from tool_shed.tool_platform where platform_uuid = 'd531f0f0-f273-11e3-8775-001a4a81450b';
-insert into tool_shed.tool_platform (platform_uuid, tool_uuid)
-select 'd531f0f0-f273-11e3-8775-001a4a81450b', t.tool_uuid
-  from tool_shed.tool t
- where t.tool_uuid != '9289b560-8f8b-11e4-829b-001a4a81450b'     # Tool: Android lint
-   and t.tool_uuid != '738b81f0-a828-11e5-865f-001a4a81450b'     # Tool: RevealDroid
-   ;
-
 # Make Platform user selectable for C/C++ package type
 update package_store.package_type
    set platform_user_selectable = 1

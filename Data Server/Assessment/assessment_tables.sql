@@ -292,3 +292,43 @@ CREATE TABLE scheduler_log (
   create_date                TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   PRIMARY KEY (scheduler_log_id)
   );
+
+###################
+## Events
+SET GLOBAL event_scheduler = ON;
+
+drop EVENT if exists scheduler;
+CREATE EVENT scheduler
+  ON SCHEDULE EVERY 30 SECOND
+  DO CALL assessment.scheduler();
+
+######################################
+drop EVENT if exists process_execution_records;
+DELIMITER $$
+CREATE EVENT process_execution_records
+  ON SCHEDULE EVERY 1 MINUTE
+  DO
+    BEGIN
+      DECLARE currently_processing_execution_records VARCHAR(1);
+      DECLARE currently_processing_execution_records_update_date TIMESTAMP;
+
+      select value, update_date
+        into currently_processing_execution_records, currently_processing_execution_records_update_date
+        from system_status
+       where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
+
+      if currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) < '00:05:00' then
+        insert into sys_exec_cmd_log (cmd, caller) values ('Call to procedure process_execution_records skipped because procedure is currently running.', 'process_execution_records');
+      elseif currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) > '00:05:00' then
+        begin
+          insert into sys_exec_cmd_log (cmd, caller) values ('process_execution_records running longer than 5 minutes.', 'process_execution_records');
+          update system_status set value = 'N' where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
+          CALL assessment.process_execution_records();
+        end;
+      else
+        CALL assessment.process_execution_records();
+      end if;
+
+END
+$$
+DELIMITER ;

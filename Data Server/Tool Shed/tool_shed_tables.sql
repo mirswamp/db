@@ -45,25 +45,6 @@ CREATE TABLE tool_version (
     CONSTRAINT fk_version_tool FOREIGN KEY (tool_uuid) REFERENCES tool (tool_uuid) ON DELETE CASCADE ON UPDATE CASCADE
  )COMMENT='Tool can have many versions';
 
-CREATE TABLE specialized_tool_version (
-  specialized_tool_version_uuid  VARCHAR(45) NOT NULL                COMMENT 'internal id',
-  tool_uuid                      VARCHAR(45) NOT NULL                COMMENT 'each version belongs to a tool; links to tool',
-  tool_version_uuid              VARCHAR(45) NOT NULL                COMMENT 'version uuid',
-  specialization_type            VARCHAR(25)                         COMMENT 'PLATFORM, LANGUAGE',
-  platform_version_uuid          VARCHAR(45)                         COMMENT 'platform version uuid',
-  package_type_id                INT                                 COMMENT 'references package_store.package_type',
-  tool_path                      VARCHAR(200)                        COMMENT 'cannonical path of tool in swamp storage',
-  checksum                       VARCHAR(200)                        COMMENT 'checksum of tool',
-  tool_executable                VARCHAR(200)                        COMMENT 'command to invoke tool',
-  tool_arguments                 VARCHAR(200)                        COMMENT 'arguments to pass to the tool',
-  tool_directory                 VARCHAR(200)                        COMMENT 'top level directory within the archive',
-  create_user                    VARCHAR(25)                         COMMENT 'user that inserted record',
-  create_date                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
-  update_user                    VARCHAR(25)                         COMMENT 'user that last updated record',
-  update_date                    TIMESTAMP NULL DEFAULT NULL         COMMENT 'date record last changed',
-  PRIMARY KEY (specialized_tool_version_uuid)
- )COMMENT='Tools may require specialized files based on OS or language';
-
 CREATE TABLE tool_sharing (
   tool_sharing_id   INT  NOT NULL AUTO_INCREMENT  COMMENT 'internal id',
   tool_uuid         VARCHAR(45)                   COMMENT 'tool uuid',
@@ -94,7 +75,6 @@ CREATE TABLE tool_platform (
   update_user           VARCHAR(50)                                  COMMENT 'db user that last updated record',
   update_date           TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
   PRIMARY KEY (tool_platform_id),
-    CONSTRAINT fk_tool_platform_t FOREIGN KEY (tool_uuid) REFERENCES tool (tool_uuid) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_tool_platform_p (platform_uuid)
  )COMMENT='Lists tool platform compatibilities';
 
@@ -107,7 +87,6 @@ CREATE TABLE tool_viewer_incompatibility (
   update_user           VARCHAR(50)                                  COMMENT 'db user that last updated record',
   update_date           TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
   PRIMARY KEY (tool_viewer_id),
-    CONSTRAINT fk_tool_viewer_t FOREIGN KEY (tool_uuid) REFERENCES tool (tool_uuid) ON DELETE CASCADE ON UPDATE CASCADE,
     INDEX idx_tool_viewer_v (viewer_uuid)
  )COMMENT='Lists tool viewer incompatibilities';
 

@@ -84,3 +84,12 @@ CREATE TABLE metric_run (
   PRIMARY KEY (metric_run_uuid),
     INDEX idx_metric_run_package_version (package_version_uuid)
  )COMMENT='metric run';
+
+###################
+## Events
+SET GLOBAL event_scheduler = ON;
+
+drop EVENT if exists initiate_metric_runs;
+CREATE EVENT initiate_metric_runs
+  ON SCHEDULE EVERY 1 MINUTE
+  DO CALL metric.initiate_metric_runs();

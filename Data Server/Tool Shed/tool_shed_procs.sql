@@ -20,8 +20,6 @@ DROP TRIGGER IF EXISTS tool_BINS;
 DROP TRIGGER IF EXISTS tool_BUPD;
 DROP TRIGGER IF EXISTS tool_version_BINS;
 DROP TRIGGER IF EXISTS tool_version_BUPD;
-DROP TRIGGER IF EXISTS specialized_tool_version_BINS;
-DROP TRIGGER IF EXISTS specialized_tool_version_BUPD;
 DROP TRIGGER IF EXISTS tool_language_BINS;
 DROP TRIGGER IF EXISTS tool_language_BUPD;
 DROP TRIGGER IF EXISTS tool_platform_BINS;
@@ -38,10 +36,6 @@ $$
 #CREATE TRIGGER tool_version_BINS BEFORE INSERT ON tool_version FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 #$$
 CREATE TRIGGER tool_version_BUPD BEFORE UPDATE ON tool_version FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
-$$
-CREATE TRIGGER specialized_tool_version_BINS BEFORE INSERT ON specialized_tool_version FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
-$$
-CREATE TRIGGER specialized_tool_version_BUPD BEFORE UPDATE ON specialized_tool_version FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
 CREATE TRIGGER tool_language_BINS BEFORE INSERT ON tool_language FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 $$
@@ -222,8 +216,7 @@ CREATE PROCEDURE select_all_pub_tools_and_vers ()
      inner join tool_version on tool.tool_uuid = tool_version.tool_uuid
      inner join tool_language tl on tool_version.tool_version_uuid = tl.tool_version_uuid
      inner join package_store.package_type pt on tl.package_type_id = pt.package_type_id
-     where tool.tool_sharing_status = 'PUBLIC'
-       and tool_version.release_date is not null;
+     where tool.tool_sharing_status = 'PUBLIC';
 END
 $$
 DELIMITER ;
@@ -237,8 +230,6 @@ CREATE PROCEDURE select_tool_version (
 )
   BEGIN
     DECLARE is_metric_tool_flag VARCHAR(1);
-    DECLARE row_count_int int;
-    DECLARE package_type_id_var int;
 
     # check if tool is a metric tool
     select 'Y'
@@ -266,49 +257,6 @@ CREATE PROCEDURE select_tool_version (
          inner join metric.metric_tool_version mtv on mt.metric_tool_uuid = mtv.metric_tool_uuid
          where mtv.metric_tool_version_uuid = tool_version_uuid_in;
     else
-      # get pkg language
-      select p.package_type_id
-        into package_type_id_var
-        from package_store.package p
-       inner join package_store.package_version pv on pv.package_uuid = p.package_uuid
-       where pv.package_version_uuid = package_version_uuid_in;
-
-      # check if specialized version exists
-      select count(1)
-        into row_count_int
-        from specialized_tool_version stv
-         where stv.tool_version_uuid = tool_version_uuid_in
-           and (
-                (stv.specialization_type = 'PLATFORM' and stv.platform_version_uuid = platform_version_uuid_in)
-                or
-                (stv.specialization_type = 'LANGUAGE' and stv.package_type_id = package_type_id_var)
-               );
-
-      if row_count_int = 1 then
-        select t.tool_uuid,
-               tv.tool_version_uuid,
-               t.name as tool_name,
-               t.tool_sharing_status,
-               tv.version_string,
-               null as platform_id,
-               tv.comment_public as public_version_comment,
-               tv.comment_private as private_version_comment,
-               stv.tool_path,
-               stv.checksum,
-               t.is_build_needed as IsBuildNeeded,
-               stv.tool_executable,
-               stv.tool_arguments,
-               stv.tool_directory
-          from tool t
-         inner join tool_version tv on t.tool_uuid = tv.tool_uuid
-         inner join specialized_tool_version stv on tv.tool_version_uuid = stv.tool_version_uuid
-         where stv.tool_version_uuid = tool_version_uuid_in
-           and (
-                (stv.specialization_type = 'PLATFORM' and stv.platform_version_uuid = platform_version_uuid_in)
-                or
-                (stv.specialization_type = 'LANGUAGE' and stv.package_type_id = package_type_id_var)
-               );
-      else
         select tool.tool_uuid,
                tool_version.tool_version_uuid,
                tool.name as tool_name,
@@ -326,7 +274,6 @@ CREATE PROCEDURE select_tool_version (
           from tool
          inner join tool_version on tool.tool_uuid = tool_version.tool_uuid
          where tool_version.tool_version_uuid = tool_version_uuid_in;
-      end if;
     end if;
 END
 $$

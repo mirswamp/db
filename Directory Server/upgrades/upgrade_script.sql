@@ -78,3 +78,7 @@ drop PROCEDURE if exists project.upgrade_18;
 source 19.sql
 call project.upgrade_19 ();
 drop PROCEDURE if exists project.upgrade_19;
+
+source 20.sql
+call project.upgrade_20 ();
+drop PROCEDURE if exists project.upgrade_20;

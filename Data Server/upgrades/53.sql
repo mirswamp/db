@@ -535,6 +535,7 @@ CREATE PROCEDURE upgrade_53 ()
         '9b1232288c80801b2f66491fd0f65cdb7b17cac062ac61589d69785074f7673886b768bcad6d7710931a6b92caaffcb11c5582838f997dd54c6638639066ba4a');
         insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b', '6a2a40d8-e281-11e6-bf70-001a4a81450b',2);
         insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b', '6a2a40d8-e281-11e6-bf70-001a4a81450b',6);
+        insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b', '6a2a40d8-e281-11e6-bf70-001a4a81450b',12);
 
         # Findbugs - drop in replacement of existing version
         update tool_shed.tool_version

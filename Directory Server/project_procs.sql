@@ -79,6 +79,7 @@ DROP TRIGGER IF EXISTS linked_account_provider_BINS;
 DROP TRIGGER IF EXISTS linked_account_provider_BUPD;
 DROP TRIGGER IF EXISTS linked_account_BINS;
 DROP TRIGGER IF EXISTS linked_account_BUPD;
+DROP TRIGGER IF EXISTS app_passwords_BUPD;
 
 DELIMITER $$
 
@@ -174,6 +175,8 @@ $$
 CREATE TRIGGER linked_account_BINS BEFORE INSERT ON linked_account FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 $$
 CREATE TRIGGER linked_account_BUPD BEFORE UPDATE ON linked_account FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
+$$
+CREATE TRIGGER app_passwords_BUPD BEFORE UPDATE ON app_passwords FOR EACH ROW SET NEW.update_date = now();
 $$
 
 DELIMITER ;

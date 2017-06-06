@@ -305,3 +305,14 @@ CREATE TABLE linked_account (
   PRIMARY KEY (linked_account_id),
     CONSTRAINT fk_linked_account FOREIGN KEY (linked_account_provider_code) REFERENCES linked_account_provider (linked_account_provider_code)
  )COMMENT='linked accounts';
+
+CREATE TABLE app_passwords (
+  app_password_id   INT          NOT NULL AUTO_INCREMENT            COMMENT 'internal id',
+  app_password_uuid VARCHAR(45)  NOT NULL                           COMMENT 'app password uuid',
+  user_uid          VARCHAR(127) NOT NULL                           COMMENT 'user uuid',
+  password          VARCHAR(127) NOT NULL                           COMMENT 'password hash',
+  label             VARCHAR(63)                                     COMMENT 'optional label',
+  create_date       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'creation date',
+  update_date       TIMESTAMP    NULL DEFAULT NULL                  COMMENT 'update date',
+  PRIMARY KEY (app_password_id)
+) COMMENT='application passwords';

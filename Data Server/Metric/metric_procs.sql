@@ -264,15 +264,6 @@ $$
 DELIMITER ;
 
 ###################
-## Events
-SET GLOBAL event_scheduler = ON;
-
-drop EVENT if exists initiate_metric_runs;
-CREATE EVENT initiate_metric_runs
-  ON SCHEDULE EVERY 1 MINUTE
-  DO CALL metric.initiate_metric_runs();
-
-###################
 ## Triggers
 
 DROP TRIGGER IF EXISTS metric_tool_BINS;
