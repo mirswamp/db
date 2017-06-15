@@ -13,5 +13,5 @@ set @tool_version_uuid = 'bdaf4b93-a811-11e4-a335-001a4a81450b';
 set @version_no = '3';
 set @version_string = '5.2.3';
 set @comment_public = 'PMD 5.2.3';
-set @tool_path = '/swamp/store/SCATools/Bundled/pmd-5.2.3-4.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/pmd-5.2.3-4.tar.gz';
 set @checksum = '2c0a50aaa65c473368cdd018f4cf5dd9d2f69a3c604a241e6f5932d4e2107373e21c418308cf8af06de20dacd0c1f02db4d1a0b3211585154cb0776d0fd60293';

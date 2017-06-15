@@ -13,5 +13,5 @@ set @tool_version_uuid = '5f258cae-de8e-11e6-bf70-001a4a81450b';
 set @version_no = '5';
 set @version_string = '1.3.0';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/bandit-py3-1.3.0.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/bandit-py3-1.3.0.tar.gz';
 set @checksum = 'd0066a24e63e75febfeaee62cd6093396413fbf3c2b29194c67f99c090c86bd98a6a24454c4844f036acff54272a1eab5592cbc4208fd902db5f56d59fdc3b27';

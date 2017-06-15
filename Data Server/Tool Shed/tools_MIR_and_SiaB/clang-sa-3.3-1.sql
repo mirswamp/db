@@ -13,5 +13,5 @@ set @tool_version_uuid = '8ec206ff-f59b-11e3-8775-001a4a81450b';
 set @version_no = '1';
 set @version_string = '3.3';
 set @comment_public = 'Clang Static Analyzer 3.3';
-set @tool_path = '/swamp/store/SCATools/Bundled/clang-sa-3.3-1.tar';
+set @tool_path = '/swamp/store/SCATools/bundled/clang-sa-3.3-1.tar';
 set @checksum = 'b374f85530bfd3924cfb370bf18538b3bf32cada2ae61471fec419b929a8d6e2ba597340a09a1b7482e078a479f1b343b75ff1307d9e0aec44ced91b858bcda8';

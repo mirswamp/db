@@ -13,5 +13,5 @@ set @tool_version_uuid = 'eae185c9-1a3d-11e7-be48-001a4a81450b';
 set @version_no = '5';
 set @version_string = '1.6.4';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/pylint-py2-1.6.4.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/pylint-py2-1.6.4.tar.gz';
 set @checksum = 'c66418905582eaeb294312e506a4c0a9af4030b18702a1ea61412ffd7275184a12694d6631a2a09517b82b5babc2c4cfa08dcdf0220c515da4c2fd064dd9f104';

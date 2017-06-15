@@ -13,5 +13,5 @@ set @tool_version_uuid = '9867c824-b741-11e6-bf70-001a4a81450b';
 set @version_no = '1';
 set @version_string = '1.2.10';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/retire-js-1.2.10.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/retire-js-1.2.10.tar.gz';
 set @checksum = 'e28dc49719fbed4143085c22170c982957a694c0ee0e9fe56bbc5faf6ba71331acd78eac8a0a4032068b9b412819d92bf5b8e3c2331f6fc54ade892176e9f8c7';

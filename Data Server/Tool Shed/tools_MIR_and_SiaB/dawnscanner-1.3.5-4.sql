@@ -13,5 +13,5 @@ set @tool_version_uuid = 'ca1608e1-4057-11e5-83f1-001a4a81450b';
 set @version_no = '1';
 set @version_string = '1.3.5';
 set @comment_public = 'Dawn 1.3.5 for Ruby';
-set @tool_path = '/swamp/store/SCATools/Bundled/dawnscanner-1.3.5-4.tar';
+set @tool_path = '/swamp/store/SCATools/bundled/dawnscanner-1.3.5-4.tar';
 set @checksum = '4a67a61a849239ad1cf2fa89df8595dd91684b1316eb6dfa1e706080e9330fe22b7f111f1299fcc3a466849510a50b9239bbf461efc7034dc360df977c0a1c92';

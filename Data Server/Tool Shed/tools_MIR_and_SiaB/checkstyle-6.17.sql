@@ -13,5 +13,5 @@ set @tool_version_uuid = 'b5115bdd-e095-11e5-ae56-001a4a81450b';
 set @version_no = '3';
 set @version_string = '6.17';
 set @comment_public = 'Checkstyle v6.17';
-set @tool_path = '/swamp/store/SCATools/Bundled/checkstyle-6.17.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/checkstyle-6.17.tar.gz';
 set @checksum = 'f522a04b57ecca06a7701d147768d092096735a9cab4f50d1b16a0c0a890b6b59af751ec99c06052b259119fad7fe28698e93c0ee4614ed751f89f09ddd64dc0';

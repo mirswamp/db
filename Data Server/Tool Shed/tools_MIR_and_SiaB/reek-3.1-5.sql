@@ -13,5 +13,5 @@ set @tool_version_uuid = '7059b296-4c14-11e5-83f1-001a4a81450b';
 set @version_no = '2';
 set @version_string = '3.1';
 set @comment_public = 'Reek 3.1 for Ruby';
-set @tool_path = '/swamp/store/SCATools/Bundled/reek-3.1-5.tar';
+set @tool_path = '/swamp/store/SCATools/bundled/reek-3.1-5.tar';
 set @checksum = '08f1e54e5a7c2772fa323d3946c8caa90d0f3a29148aeda6f88d0532de70eaba2703a0dced97aaf6cf3ea7d7940e3132c5e5448b8e38c8bad46828111056d977';

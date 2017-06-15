@@ -13,5 +13,5 @@ set @tool_version_uuid = '749d3edd-b741-11e6-bf70-001a4a81450b';
 set @version_no = '1';
 set @version_string = '0.37.4';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/flow-0.37.4.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/flow-0.37.4.tar.gz';
 set @checksum = 'a25ab9c67d0e2e206e07931988cce380005e605470dc0df5a93ebfd19816525af257aae7006f730ac414fe95f6164c314df2bb476980d6187f87283cf2af6506';

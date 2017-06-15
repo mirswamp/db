@@ -13,5 +13,5 @@ set @tool_version_uuid = '68b0cb72-b741-11e6-bf70-001a4a81450b';
 set @version_no = '1';
 set @version_string = '3.10.1';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/eslint-3.10.1.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/eslint-3.10.1.tar.gz';
 set @checksum = 'a2f1d434e35220bf1ab86e8b494cd8b2bb1e4cb13277016be710341c2b3495619dd78f9ac1f0e18b11f3f569346a8bea266f557164e8398a2b5cfcdbe3ce3bd7';

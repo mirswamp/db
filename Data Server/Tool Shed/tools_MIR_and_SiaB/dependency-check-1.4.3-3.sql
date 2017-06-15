@@ -13,5 +13,5 @@ set @tool_version_uuid = 'e3466345-9184-11e6-88bc-001a4a81450b';
 set @version_no = '1';
 set @version_string = '1.4.3';
 set @comment_public = 'OWASP Dependency Check 1.4.3';
-set @tool_path = '/swamp/store/SCATools/Bundled/dependency-check-1.4.3-3.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/dependency-check-1.4.3-3.tar.gz';
 set @checksum = 'c65d1e83adbc80f4e2d8c0c8e9340a3baa65983c99a8f0359c5c705bc632ad28d6383ee3dd5d8cbe5acce510904951fc531d9c0c922fb6e1ec55357a45c79b04';

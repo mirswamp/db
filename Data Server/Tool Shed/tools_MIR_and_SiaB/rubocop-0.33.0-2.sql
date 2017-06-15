@@ -13,5 +13,5 @@ set @tool_version_uuid = 'ea1f9693-46ac-11e5-83f1-001a4a81450b';
 set @version_no = '2';
 set @version_string = '0.33';
 set @comment_public = 'RuboCop 0.33 for Ruby';
-set @tool_path = '/swamp/store/SCATools/Bundled/rubocop-0.33.0-2.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/rubocop-0.33.0-2.tar.gz';
 set @checksum = '4ced934bbcfef8e08eef17fd4071337b073a7c00d370c3c4ed63aabeeeba2b843ee0cd0975e3b81850699c9b28575c5f5e49d20daff2356f0ed06ca4080395da';

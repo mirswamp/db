@@ -13,5 +13,5 @@ set @tool_version_uuid = '8c75d607-b741-11e6-bf70-001a4a81450b';
 set @version_no = '1';
 set @version_string = '2.5.0';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/phpmd-2.5.0.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/phpmd-2.5.0.tar.gz';
 set @checksum = '906f5b7491ff23a92c50306532c6e84ef9ef06cceeb4ae7fb086189a6d1a3fff4d573285e703e91df83cff6145e0cd72733550974caa9bfca2a43be7c46572a2';

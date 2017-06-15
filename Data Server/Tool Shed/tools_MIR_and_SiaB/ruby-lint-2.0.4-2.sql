@@ -13,5 +13,5 @@ set @tool_version_uuid = '6b5624a0-0946-11e5-b6a7-001a4a81450b';
 set @version_no = '1';
 set @version_string = '2.0.4';
 set @comment_public = 'ruby-lint 2.0.4 for Ruby';
-set @tool_path = '/swamp/store/SCATools/Bundled/ruby-lint-2.0.4-2.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/ruby-lint-2.0.4-2.tar.gz';
 set @checksum = '09b445f60c94d96bd8f4a354a8d1574265210c1dfb3a95ca335a83ec9bba397a7bc5356308c9d10affbb9957e9251dd6cd9c2c79ef3ce24a016a12c1b7b12a97';

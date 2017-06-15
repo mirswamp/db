@@ -13,5 +13,5 @@ set @tool_version_uuid = '8666e176-a828-11e5-865f-001a4a81450b';
 set @version_no = '1';
 set @version_string = '2015.11.05';
 set @comment_public = 'RevealDroid 2015.11.05';
-set @tool_path = '/swamp/store/SCATools/Bundled/revealdroid-2015.11.05-1.tar';
+set @tool_path = '/swamp/store/SCATools/bundled/revealdroid-2015.11.05-1.tar';
 set @checksum = '1a0d4a9e0696db42a37fdba6dd0304b83c7450e1ef5a2873347ecc87320b9e24008a66c058fd9969eddbe5dd1b20eb61b705845ff49b69897946b3095ca3d4a8';

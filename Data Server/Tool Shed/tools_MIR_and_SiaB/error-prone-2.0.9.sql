@@ -13,5 +13,5 @@ set @tool_version_uuid = '4fcb04a8-e096-11e5-ae56-001a4a81450b';
 set @version_no = '2';
 set @version_string = '2.0.9';
 set @comment_public = 'error-prone v2.0.9';
-set @tool_path = '/swamp/store/SCATools/Bundled/error-prone-2.0.9.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/error-prone-2.0.9.tar.gz';
 set @checksum = 'a90c1ed3c6b36294bdf4e8d65f37e3301fd3b2931b7e9ae9285e4ca1e3b5f929af198c15bc1383f11958ac6ffabad9dbf98ded0d75785c0f8bfa9661aaeed13b';

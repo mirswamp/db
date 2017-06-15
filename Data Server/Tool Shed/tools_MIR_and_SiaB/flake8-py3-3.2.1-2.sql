@@ -13,5 +13,5 @@ set @tool_version_uuid = '0a01266d-de92-11e6-bf70-001a4a81450b';
 set @version_no = '6';
 set @version_string = '3.2.1';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/Bundled/flake8-py3-3.2.1-2.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/flake8-py3-3.2.1-2.tar.gz';
 set @checksum = 'b053f8357a81441a20564579ffaff1db14ea2f5a17215028fa5407faa6ba39ca45e3ce79f34ca26d854b2789687e05399c937ff41c619c2d8fb46e65d889a0d2';
