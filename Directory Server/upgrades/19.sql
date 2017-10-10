@@ -42,7 +42,7 @@ CREATE PROCEDURE upgrade_19 ()
         if (system_type = 'MIR_SWAMP') then
           # insert GrammaTech CodeSonar permission
           delete from project.permission where permission_code = 'codesonar-user';
-          insert into project.permission (permission_code, title, description, admin_only_flag, policy_code) values ('codesonar-user', 'CodeSonar User', 'GrammaTech CodeSonar User', 0, 'codesonar-user-policy');
+          insert into project.permission (permission_code, title, description, admin_only_flag, policy_code) values ('codesonar-user', 'CodeSonar User', 'Permission to access and use the CodeSonar static analysis tool for C/C++ from GrammaTech.', 0, 'codesonar-user-policy');
           # insert GrammaTech policy
           delete from project.policy where policy_code = 'codesonar-user-policy';
           insert into project.policy (policy_code, description, policy) values ('codesonar-user-policy', 'GrammaTech CodeSonar EULA', '<div style=\"white-space: pre-wrap;\">\r\n\r\nSOFTWARE END USER LICENCE TERMS\r\n\r\nOpen Source Developers: <a href="https://www.swampinabox.org/doc/eula_codesonar_oss.pdf" target="_blank">https://www.swampinabox.org/doc/eula_codesonar_oss.pdf</a>\r\n\r\nAcademic Users: <a href="https://www.swampinabox.org/doc/eula_codesonar_academic.pdf" target="_blank">https://www.swampinabox.org/doc/eula_codesonar_academic.pdf</a></div>');

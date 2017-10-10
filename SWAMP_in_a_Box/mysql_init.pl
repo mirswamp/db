@@ -12,88 +12,20 @@ use 5.010;
 use English qw( -no_match_vars );
 
 my $debug = 0;
+my $service_cmd = '/opt/swamp/sbin/swamp_manage_service';
 
-#
-# Test for whether `systemctl` is available.
-#
-print "Testing for systemctl\n";
-
-my $is_systemctl_avail = (0 == system 'which', 'systemctl');
-
-if ($is_systemctl_avail) {
-    print "Found systemctl\n";
-}
-else {
-    print "Did not find systemctl\n";
-}
-
-#
-# Query or control a service using `service` or `systemctl`.
-#
-sub tell_service { my ($service, $command) = @_ ;
-    my $system_command;
-
-    if ($is_systemctl_avail) {
-        $system_command = "systemctl $command $service";
-    }
-    else {
-        $system_command = "service $service $command";
-    }
-
-    print "Calling: $system_command\n" if $debug;
-    return (`$system_command` || q{});
-}
-
-#
-# Determine whether a service is "stopped" or "running".
-# WARNING: Might not work in all contexts or for all services.
-#
-sub get_status { my ($service) = @_ ;
-    my $command = $is_systemctl_avail ? 'show --property ActiveState' : 'status';
-    my $status = tell_service($service, $command);
-
-    given ($status) {
-        when (/MySQL running|is running|=active/sm) { $status = 'running'; }
-        when (/not running|stopped|=inactive/sm)    { $status = 'stopped'; }
-        default                                     { $status = 'error'; }
-    }
-
-    print "status $service: $status\n" if $debug;
-    return $status;
-}
-
-#
-# Start or stop a service.
-#
-sub toggle_service { my ($service, $command, $old_state, $new_state) = @_;
-    my $status = get_status($service);
-
-    if ($status eq $new_state) {
-        print "$command $service: already $new_state\n" if $debug;
-        return 1;
-    }
-
-    if ($status eq $old_state) {
-        tell_service($service, $command);
-        $status = get_status($service);
-        if ($status eq $new_state) {
-            print "$command $service: succeeded\n" if $debug;
-            return 1;
-        }
-    }
-
-    print "$command $service: failed, status: $status\n" if $debug;
-    return 0;
+if (!-x $service_cmd) {
+    die "Error: $PROGRAM_NAME: Not executable: $service_cmd\n";
 }
 
 sub start_service { my ($service) = @_ ;
-    print "Starting service: $service\n";
-    return toggle_service($service, 'start', 'stopped', 'running');
+    print qx("$service_cmd" "$service" start);
+    return;
 }
 
 sub stop_service { my ($service) = @_ ;
-    print "Stopping service: $service\n";
-    return toggle_service($service, 'stop', 'running', 'stopped');
+    print qx("$service_cmd" "$service" stop);
+    return;
 }
 
 #
@@ -111,6 +43,7 @@ sub remove_mysql {
     }
 
     print "rm -rf /var/lib/mysql/*: $result\n" if $debug;
+    return;
 }
 
 #
@@ -128,6 +61,7 @@ sub install_mysql {
     }
 
     print "mysql_install_db --user=mysql: $result\n" if $debug;
+    return;
 }
 
 #

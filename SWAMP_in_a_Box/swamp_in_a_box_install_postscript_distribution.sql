@@ -27,16 +27,20 @@ delete from project.permission where permission_code = 'ssh-access';
 delete from project.permission where permission_code = 'codesonar-user';
 delete from project.permission where permission_code = 'parasoft-user-c-test';
 delete from project.permission where permission_code = 'parasoft-user-j-test';
+delete from project.permission where permission_code = 'coverity-user';
 delete from project.policy where policy_code = 'codesonar-user-policy';
 delete from project.policy where policy_code = 'parasoft-user-c-test-policy';
 delete from project.policy where policy_code = 'parasoft-user-j-test-policy';
+delete from project.policy where policy_code = 'coverity-user-policy';
 delete from project.user_permission where permission_code = 'ssh-access';
 delete from project.user_permission where permission_code = 'codesonar-user';
 delete from project.user_permission where permission_code = 'parasoft-user-c-test';
 delete from project.user_permission where permission_code = 'parasoft-user-j-test';
+delete from project.user_permission where permission_code = 'coverity-user';
 delete from project.user_policy where policy_code = 'codesonar-user-policy';
 delete from project.user_policy where policy_code = 'parasoft-user-c-test-policy';
 delete from project.user_policy where policy_code = 'parasoft-user-j-test-policy';
+delete from project.user_policy where policy_code = 'coverity-user-policy';
 
 # Disable metric runs
 ALTER EVENT metric.initiate_metric_runs DISABLE; # disables M-Runs

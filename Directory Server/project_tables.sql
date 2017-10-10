@@ -114,7 +114,10 @@ CREATE TABLE permission (
   title                     VARCHAR(100)                                 COMMENT 'display name',
   description               VARCHAR(200)                                 COMMENT 'explanation of permission',
   admin_only_flag           tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is visible to admins only: 0=false 1=true',
+  auto_approve_flag         tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is automatically approved: 0=false 1=true',
   policy_code               VARCHAR(100)                                 COMMENT 'links to policy',
+  user_info                 VARCHAR (5000)                               COMMENT 'what user info is gathered',
+  user_info_policy_text     VARCHAR (5000)                               COMMENT 'what will be done with user info',
   create_user               VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user               VARCHAR(25)                                  COMMENT 'db user that last updated record',
@@ -229,11 +232,11 @@ CREATE TABLE email_verification (
  ) COMMENT='email verifications';
 
 CREATE TABLE password_reset (
-  password_reset_id      INT  NOT NULL  AUTO_INCREMENT       COMMENT 'internal id',
+  password_reset_uuid    VARCHAR(45)                         COMMENT 'internal id',
   user_uid               VARCHAR(45)                         COMMENT 'user uuid',
   password_reset_key     VARCHAR(100)                        COMMENT 'reset key',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
-  PRIMARY KEY (password_reset_id)
+  PRIMARY KEY (password_reset_uuid)
  ) COMMENT='Password Reset keys';
 
 CREATE TABLE restricted_domains (

@@ -14,8 +14,6 @@ CREATE TABLE project.user (
   last_name varchar(255) DEFAULT NULL,
   preferred_name varchar(255) DEFAULT NULL,
   email varchar(255) DEFAULT NULL,
-  address varchar(255) DEFAULT NULL,
-  phone varchar(255) DEFAULT NULL,
   affiliation varchar(255) DEFAULT NULL,
   admin tinyint(1) DEFAULT NULL,
   enabled_flag tinyint(1) DEFAULT NULL,

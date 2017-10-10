@@ -92,6 +92,9 @@ CREATE TABLE execution_record (
   assessment_run_uuid          VARCHAR(45) NOT NULL                         COMMENT 'assessment run uuid',
   run_request_uuid             VARCHAR(45) NOT NULL                         COMMENT 'run request uuid',
   user_uuid                    VARCHAR(45)                                  COMMENT 'user that requested run',
+  launch_flag                  tinyint(1) NOT NULL DEFAULT 1                COMMENT 'Launch Run: 0=false 1=true',
+  launch_counter               tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Launch counter',
+  complete_flag                tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is run complete: 0=false 1=true',
   notify_when_complete_flag    tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Notify user when run finishes: 0=false 1=true',
   project_uuid                 VARCHAR(45) NOT NULL                         COMMENT 'projects owns',
   platform_version_uuid        VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
@@ -103,7 +106,8 @@ CREATE TABLE execution_record (
   queued_duration              VARCHAR(12)                                  COMMENT 'string run date minus create date',
   execution_duration           VARCHAR(12)                                  COMMENT 'string completion date minus run date',
   execute_node_architecture_id VARCHAR(128)                                 COMMENT 'execute note id',
-  lines_of_code                INT                                          COMMENT 'loc analyzed',
+  total_lines                  INT                                          COMMENT 'total LOC',
+  code_lines                   INT                                          COMMENT 'LOC minus blanks and comments',
   cpu_utilization              VARCHAR(32)                                  COMMENT 'cpu utilization',
   vm_hostname                  VARCHAR(100)                                 COMMENT 'vm ssh hostname',
   vm_username                  VARCHAR(50)                                  COMMENT 'vm ssh username',
@@ -123,21 +127,6 @@ CREATE TABLE execution_record (
     INDEX idx_execution_record_ar_uuid (assessment_run_uuid)
  )COMMENT='execution records';
 
-#############################
-CREATE TABLE execution_event (
-  execution_event_id      INT  NOT NULL  AUTO_INCREMENT                COMMENT 'internal id',
-  execution_record_uuid   VARCHAR(45) NOT NULL                         COMMENT 'execution record uuid',
-  event_time              VARCHAR(25)                                  COMMENT 'event',
-  event                   VARCHAR(25)                                  COMMENT 'event',
-  payload                 VARCHAR(100)                                 COMMENT 'optional additional info',
-  create_user             VARCHAR(25)                                  COMMENT 'db user that inserted record',
-  create_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
-  update_user             VARCHAR(25)                                  COMMENT 'db user that last updated record',
-  update_date             TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
-  PRIMARY KEY (execution_event_id),
-    CONSTRAINT fk_execution_event FOREIGN KEY (execution_record_uuid) REFERENCES execution_record (execution_record_uuid) ON DELETE CASCADE ON UPDATE CASCADE
- )COMMENT='execution records';
-
 ##############################
 CREATE TABLE assessment_result (
   assessment_result_uuid       VARCHAR(45)  NOT NULL                        COMMENT 'assessment result uuid',
@@ -151,6 +140,7 @@ CREATE TABLE assessment_result (
   source_archive_checksum      VARCHAR(200)                                 COMMENT 'source file checksum',
   log_path                     VARCHAR(200)                                 COMMENT 'cannonical path of log file',
   log_checksum                 VARCHAR(200)                                 COMMENT 'log file checksum',
+  status_out                   TEXT                                         COMMENT 'contents of status.out file',
   platform_name                VARCHAR(100)                                 COMMENT 'platform name',
   platform_version             VARCHAR(100)                                 COMMENT 'platform version',
   tool_name                    VARCHAR(100)                                 COMMENT 'tool name',
@@ -164,6 +154,7 @@ CREATE TABLE assessment_result (
   create_date                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user                  VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date                  TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date                  TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
   PRIMARY KEY (assessment_result_uuid),
     CONSTRAINT fk_assessment_result_exec FOREIGN KEY (execution_record_uuid) REFERENCES execution_record (execution_record_uuid) ON DELETE SET NULL ON UPDATE CASCADE,
     INDEX idx_assessment_result_proj_uuid (project_uuid)
@@ -293,42 +284,19 @@ CREATE TABLE scheduler_log (
   PRIMARY KEY (scheduler_log_id)
   );
 
+CREATE TABLE scheduler_logging (
+  id INT  NOT NULL AUTO_INCREMENT,
+  msg VARCHAR(25),
+  create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+  );
+
 ###################
 ## Events
-SET GLOBAL event_scheduler = ON;
-
+##  Events in assessment_tables.sql will only be created on install, but untouched during upgrades.
+##  Events in assessment_procs.sql will created on installs, as well as dropped and recreated during upgrades.
 drop EVENT if exists scheduler;
 CREATE EVENT scheduler
   ON SCHEDULE EVERY 30 SECOND
   DO CALL assessment.scheduler();
 
-######################################
-drop EVENT if exists process_execution_records;
-DELIMITER $$
-CREATE EVENT process_execution_records
-  ON SCHEDULE EVERY 1 MINUTE
-  DO
-    BEGIN
-      DECLARE currently_processing_execution_records VARCHAR(1);
-      DECLARE currently_processing_execution_records_update_date TIMESTAMP;
-
-      select value, update_date
-        into currently_processing_execution_records, currently_processing_execution_records_update_date
-        from system_status
-       where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
-
-      if currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) < '00:05:00' then
-        insert into sys_exec_cmd_log (cmd, caller) values ('Call to procedure process_execution_records skipped because procedure is currently running.', 'process_execution_records');
-      elseif currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) > '00:05:00' then
-        begin
-          insert into sys_exec_cmd_log (cmd, caller) values ('process_execution_records running longer than 5 minutes.', 'process_execution_records');
-          update system_status set value = 'N' where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
-          CALL assessment.process_execution_records();
-        end;
-      else
-        CALL assessment.process_execution_records();
-      end if;
-
-END
-$$
-DELIMITER ;

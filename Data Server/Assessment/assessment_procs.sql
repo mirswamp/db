@@ -39,6 +39,100 @@ union
    inner join package_store.package pa on pa.package_uuid = pav.package_uuid
    left outer join assessment_result a on er.execution_record_uuid = a.execution_record_uuid;
 
+CREATE OR REPLACE VIEW exec_run_view as
+select
+er.execution_record_uuid,
+er.project_uuid,
+er.user_uuid,
+pkg.name as package_name,
+pkg.package_language,
+pkg_type.name as package_type,
+pkg_ver.package_path,
+pkg_ver.checksum as pkg_checksum,
+pkg_ver.source_path,
+pkg_ver.build_file,
+pkg_ver.build_system,
+pkg_ver.build_cmd,
+pkg_ver.build_target,
+pkg_ver.build_dir,
+pkg_ver.build_opt,
+pkg_ver.config_cmd,
+pkg_ver.config_opt,
+pkg_ver.config_dir,
+pkg_ver.bytecode_class_path,
+pkg_ver.bytecode_aux_class_path,
+pkg_ver.bytecode_source_path,
+pkg_ver.android_sdk_target,
+pkg_ver.android_lint_target,
+pkg_ver.android_redo_build,
+pkg_ver.use_gradle_wrapper,
+pkg_ver.language_version,
+pkg_ver.maven_version,
+pkg_ver.android_maven_plugin,
+tool.name as tool_name,
+tool_ver.version_string,
+tool_ver.tool_path,
+tool_ver.checksum as tool_checksum,
+plt_ver.platform_path,
+pvd.dependency_list,
+case when tool_ver.tool_version_uuid = 'a6d2a89e-4a1c-11e7-a337-001a4a81450b'
+     then (select up.meta_information from project.user_permission up where up.user_uid = er.user_uuid and up.permission_code = 'sonatype-user')
+     else null end as user_cnf
+from assessment.execution_record er
+inner join package_store.package_version pkg_ver on pkg_ver.package_version_uuid = er.package_version_uuid
+inner join package_store.package pkg on pkg.package_uuid = pkg_ver.package_uuid
+inner join package_store.package_type pkg_type on pkg.package_type_id = pkg_type.package_type_id
+inner join tool_shed.tool_version tool_ver on tool_ver.tool_version_uuid = er.tool_version_uuid
+inner join tool_shed.tool on tool.tool_uuid = tool_ver.tool_uuid
+inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = er.platform_version_uuid
+left outer join package_store.package_version_dependency pvd on er.package_version_uuid = pvd.package_version_uuid and er.platform_version_uuid = pvd.platform_version_uuid
+union
+select
+mr.metric_run_uuid as execution_record_uuid,
+'METRIC' as project_uuid,
+'METRIC' as user_uuid,
+pkg.name as package_name,
+pkg.package_language,
+pkg_type.name as package_type,
+pkg_ver.package_path,
+pkg_ver.checksum as pkg_checksum,
+pkg_ver.source_path,
+pkg_ver.build_file,
+pkg_ver.build_system,
+pkg_ver.build_cmd,
+pkg_ver.build_target,
+pkg_ver.build_dir,
+pkg_ver.build_opt,
+pkg_ver.config_cmd,
+pkg_ver.config_opt,
+pkg_ver.config_dir,
+pkg_ver.bytecode_class_path,
+pkg_ver.bytecode_aux_class_path,
+pkg_ver.bytecode_source_path,
+pkg_ver.android_sdk_target,
+pkg_ver.android_lint_target,
+pkg_ver.android_redo_build,
+pkg_ver.use_gradle_wrapper,
+pkg_ver.language_version,
+pkg_ver.maven_version,
+pkg_ver.android_maven_plugin,
+mt.name as tool_name,
+mtv.version_string,
+mtv.tool_path,
+mtv.checksum as tool_checksum,
+plt_ver.platform_path,
+pvd.dependency_list,
+null as user_cnf
+from metric.metric_run mr
+inner join package_store.package_version pkg_ver on pkg_ver.package_version_uuid = mr.package_version_uuid
+inner join package_store.package pkg on pkg.package_uuid = pkg_ver.package_uuid
+inner join package_store.package_type pkg_type on pkg.package_type_id = pkg_type.package_type_id
+inner join metric.metric_tool_version mtv on mtv.metric_tool_version_uuid = mr.tool_version_uuid
+inner join metric.metric_tool mt on mt.metric_tool_uuid = mtv.metric_tool_uuid
+inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = mr.platform_version_uuid
+left outer join package_store.package_version_dependency pvd on mr.package_version_uuid = pvd.package_version_uuid and mr.platform_version_uuid = pvd.platform_version_uuid
+;
+
 ####################
 ## Stored Procedures
 drop PROCEDURE if exists select_execution_record;
@@ -59,7 +153,7 @@ CREATE PROCEDURE select_execution_record (
                run_date,
                completion_date,
                execute_node_architecture_id,
-               lines_of_code,
+               total_lines,
                cpu_utilization,
                'METRIC' as user_uuid
           from metric.metric_run
@@ -74,7 +168,7 @@ CREATE PROCEDURE select_execution_record (
                run_date,
                completion_date,
                execute_node_architecture_id,
-               lines_of_code,
+               total_lines,
                cpu_utilization,
                user_uuid
           from execution_record
@@ -310,6 +404,7 @@ CREATE PROCEDURE validate_execution_record (
     DECLARE package_ok  CHAR(1);
     DECLARE parasoft_ok  CHAR(1);
     DECLARE grammatech_ok  CHAR(1);
+    DECLARE coverity_ok  CHAR(1);
 
     # get info from execution_record
     select project_uuid, platform_version_uuid, tool_version_uuid, package_version_uuid, user_uuid
@@ -392,7 +487,7 @@ CREATE PROCEDURE validate_execution_record (
              )
          and up.grant_date is not null  #granted
          and up.delete_date is null     #not revoked
-         and up.expiration_date > now() #hasn't expired
+         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
          ;
     else
       set parasoft_ok = 'Y';
@@ -409,10 +504,27 @@ CREATE PROCEDURE validate_execution_record (
          and upp.policy_code    = 'codesonar-user-policy'
          and up.grant_date is not null  #granted
          and up.delete_date is null     #not revoked
-         and up.expiration_date > now() #hasn't expired
+         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
          ;
     else
       set grammatech_ok = 'Y';
+    end if;
+
+    # if tool is Coverity, verify user has permission and signed EULA
+    if tool_version_uuid_var in ('f9c00dd6-82a4-11e7-9baa-001a4a81450b') then
+      select 'Y'
+        into coverity_ok
+        from project.user_permission up
+       inner join project.user_policy upp on upp.user_uid = up.user_uid
+       where up.user_uid = user_uuid_var
+         and up.permission_code = 'coverity-user'
+         and upp.policy_code    = 'coverity-user-policy'
+         and up.grant_date is not null  #granted
+         and up.delete_date is null     #not revoked
+         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
+         ;
+    else
+      set coverity_ok = 'Y';
     end if;
 
     if (user_ok = 'Y' and project_ok = 'Y' and platform_ok = 'Y' and tool_ok = 'Y' and package_ok = 'Y' and parasoft_ok = 'Y' and grammatech_ok = 'Y')
@@ -424,6 +536,7 @@ CREATE PROCEDURE validate_execution_record (
     elseif package_ok    is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PACKAGE NOT AVAILABLE';
     elseif parasoft_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PARASOFT NOT AVAILABLE';
     elseif grammatech_ok is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: CODESONAR NOT AVAILABLE';
+    elseif coverity_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: COVERITY NOT AVAILABLE';
     else                             set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA';
     end if;
 
@@ -574,6 +687,9 @@ CREATE PROCEDURE process_execution_records ()
     DECLARE validate_return_code VARCHAR(100);
     DECLARE exec_return_code INT;
     DECLARE end_of_loop BOOL;
+    #DECLARE counter INT;     ## log exec timing
+    #DECLARE start_time TIME; ## log exec timing
+    #DECLARE end_time TIME;   ## log exec timing
     DECLARE cur1 CURSOR FOR
     select execution_record_uuid
       from execution_record er
@@ -581,6 +697,8 @@ CREATE PROCEDURE process_execution_records ()
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND
         SET end_of_loop = TRUE;
+
+    #set counter = 0; ## log exec timing
 
     # set flag currently_processing_execution_records
     update system_status
@@ -594,6 +712,7 @@ CREATE PROCEDURE process_execution_records ()
         LEAVE read_loop;
       END IF;
 
+      #set counter = counter + 1; ## log exec timing
       # validate
       call assessment.validate_execution_record(execution_record_uuid_var, validate_return_code);
 
@@ -601,7 +720,17 @@ CREATE PROCEDURE process_execution_records ()
       if validate_return_code = 'Y'
         then
           begin
+            #set start_time = now();                                  ## log exec timing
             call assessment.execute_execution_record(execution_record_uuid_var, exec_return_code);
+            #set end_time = now();                                    ## log exec timing
+            #insert into scheduler_logging (msg) values (             ## log exec timing
+            #  concat(                                                ## log exec timing
+            #    'launch ',                                           ## log exec timing
+            #    counter,                                             ## log exec timing
+            #    ' - ',                                               ## log exec timing
+            #    ifnull(TIMEDIFF(end_time, start_time),'0')           ## log exec timing
+            #    )                                                    ## log exec timing
+            #    );                                                   ## log exec timing
             if exec_return_code = 0
             then
               update execution_record set status = 'SUBMITTING TO HTCONDOR' where execution_record_uuid = execution_record_uuid_var;
@@ -622,7 +751,6 @@ CREATE PROCEDURE process_execution_records ()
     update system_status
        set value = 'N'
       where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
-
 END
 $$
 DELIMITER ;
@@ -639,6 +767,8 @@ CREATE PROCEDURE insert_results (
     IN log_path_in VARCHAR(200),
     IN log_checksum_in VARCHAR(200),
     IN weakness_cnt_in INT,
+    IN lines_of_code_in INT,
+    IN status_out_in VARCHAR(3000),
     OUT return_string varchar(100)
   )
   BEGIN
@@ -684,6 +814,7 @@ CREATE PROCEDURE insert_results (
                                     log_path_in,
                                     log_checksum_in,
                                     weakness_cnt_in,
+                                    status_out_in,
                                     metric_return_string);
         set return_string = metric_return_string;
     else
@@ -788,7 +919,7 @@ CREATE PROCEDURE insert_results (
 
             insert into assessment_result (
               assessment_result_uuid, execution_record_uuid, project_uuid, weakness_cnt,
-              file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum,
+              file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out,
               platform_name, platform_version, tool_name, tool_version, package_name, package_version,
               platform_version_uuid, tool_version_uuid, package_version_uuid)
             values (
@@ -803,6 +934,7 @@ CREATE PROCEDURE insert_results (
               source_archive_checksum_in,  # source_archive_checksum,
               concat(log_dest_path,log_filename),    # log_path
               log_checksum_in,             # log_checksum
+              status_out_in,               # status_out
               platform_name_var,           # platform_name,
               platform_version_var,        # platform_version,
               tool_name_var,               # tool_name,
@@ -819,6 +951,13 @@ CREATE PROCEDURE insert_results (
               insert into notification (notification_uuid, user_uuid, notification_impetus, relevant_uuid, transmission_medium)
                 values (uuid(), user_uuid_var, 'Assessment result available', assessment_result_uuid, 'EMAIL');
             end if;
+
+            if lines_of_code_in is not null then
+              update assessment.execution_record
+                 set code_lines = lines_of_code_in
+                where execution_record_uuid = execution_record_uuid_in;
+            end if;
+
 
             set return_string = 'SUCCESS';
           end;
@@ -883,7 +1022,7 @@ CREATE PROCEDURE update_execution_run_status (
                      queued_duration = timediff(run_start_time_in, create_date),
                      execution_duration = timediff(run_end_time_in, run_start_time_in),
                      execute_node_architecture_id = exec_node_architecture_id_in,
-                     lines_of_code = lines_of_code_in,
+                     code_lines = lines_of_code_in,
                      cpu_utilization = cpu_utilization_in,
                      vm_password = vm_password_in,
                      #dont overwrite if incoming value is blank
@@ -933,7 +1072,7 @@ CREATE PROCEDURE update_execution_run_status (
                    queued_duration = timediff(run_start_time_in, create_date),
                    execution_duration = timediff(run_end_time_in, run_start_time_in),
                    execute_node_architecture_id = exec_node_architecture_id_in,
-                   lines_of_code = lines_of_code_in,
+                   code_lines = lines_of_code_in,
                    cpu_utilization = cpu_utilization_in,
                    vm_password = vm_password_in,
                    #dont overwrite if incoming value is blank
@@ -957,46 +1096,6 @@ $$
 DELIMITER ;
 
 drop PROCEDURE if exists insert_execution_event;
-DELIMITER $$
-############################################
-CREATE PROCEDURE insert_execution_event (
-    IN execution_record_uuid_in VARCHAR(45),
-    IN event_time_in VARCHAR(25),
-    IN event_in VARCHAR(25),
-    IN payload_in VARCHAR(100),
-    OUT return_string varchar(100)
-  )
-  BEGIN
-    DECLARE row_count_int int;
-
-    # Metric Runs
-    if execution_record_uuid_in like 'M-%'
-      then
-        # Execution Events not recorded for Metric Runs
-        set return_string = 'SUCCESS';
-    # Assessment Runs
-    else
-      # verify exists 1 matching execution_record
-      select count(1)
-        into row_count_int
-        from assessment.execution_record
-       where execution_record_uuid = execution_record_uuid_in;
-
-      if row_count_int = 1 then
-        BEGIN
-          insert into execution_event (execution_record_uuid, event_time, event, payload)
-            values (execution_record_uuid_in, event_time_in, event_in, payload_in);
-
-          set return_string = 'SUCCESS';
-        END;
-      else
-        set return_string = 'ERROR: Record Not Found';
-      end if;
-    end if;
-
-END
-$$
-DELIMITER ;
 
 drop PROCEDURE if exists launch_viewer;
 DELIMITER $$
@@ -1600,7 +1699,7 @@ CREATE PROCEDURE kill_assessment_run (
                          '');
 
         # Verbose Logging
-          # insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'kill_assessment_run');
+          insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'kill_assessment_run');
         set cmd_return = sys_exec(cmd);
 
         # if successful, then update record and tell Web success
@@ -1645,40 +1744,6 @@ $$
 DELIMITER ;
 
 drop PROCEDURE if exists set_system_status;
-DELIMITER $$
-############################################
-CREATE PROCEDURE set_system_status (
-    IN status_key_in VARCHAR(512),
-    IN value_in VARCHAR(5000),
-    OUT return_string varchar(100)
-  )
-  BEGIN
-    DECLARE row_count_int int;
-
-    # check if key exists
-    select count(1)
-      into row_count_int
-      from assessment.system_status
-     where status_key = status_key_in;
-
-    if row_count_int = 0 then begin
-      insert into system_status (status_key, value)
-        values (status_key_in, value_in);
-      set return_string = 'SUCCESS';
-      end;
-    elseif row_count_int  = 1 then begin
-      update system_status
-         set value = value_in
-        where status_key = status_key_in;
-      set return_string = 'SUCCESS';
-      end;
-    else
-      set return_string = 'ERROR: Duplicate Records Found';
-    end if;
-
-END
-$$
-DELIMITER ;
 
 ###################
 ## Triggers
@@ -1695,8 +1760,6 @@ DROP TRIGGER IF EXISTS assessment_run_request_BINS;
 DROP TRIGGER IF EXISTS assessment_run_request_BUPD;
 DROP TRIGGER IF EXISTS execution_record_BINS;
 DROP TRIGGER IF EXISTS execution_record_BUPD;
-DROP TRIGGER IF EXISTS execution_event_BINS;
-DROP TRIGGER IF EXISTS execution_event_BUPD;
 DROP TRIGGER IF EXISTS assessment_result_BINS;
 DROP TRIGGER IF EXISTS assessment_result_BUPD;
 DROP TRIGGER IF EXISTS assessment_result_viewer_history_BINS;
@@ -1734,12 +1797,8 @@ CREATE TRIGGER assessment_run_request_BUPD BEFORE UPDATE ON assessment_run_reque
 $$
 CREATE TRIGGER execution_record_BINS BEFORE INSERT ON execution_record FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 $$
-CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
-$$
-CREATE TRIGGER execution_event_BINS BEFORE INSERT ON execution_event FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
-$$
-CREATE TRIGGER execution_event_BUPD BEFORE UPDATE ON execution_event FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
-$$
+#CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
+#$$
 CREATE TRIGGER assessment_result_BINS BEFORE INSERT ON assessment_result FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 $$
 CREATE TRIGGER assessment_result_BUPD BEFORE UPDATE ON assessment_result FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
@@ -1838,7 +1897,9 @@ CREATE TRIGGER notification_AINS AFTER INSERT ON notification FOR EACH ROW
 
     # lkup assessment_result
     select project_uuid, execution_record_uuid,
-           IF(file_path like '%results.tar.gz%', 'FAILURE', 'SUCCESS') as success_or_failure,
+           case when file_path like '%results.tar.gz%' then 'FAILURE'
+                when file_path like '%outputdisk.tar.gz%' then 'FAILURE'
+                else 'SUCCESS' end as success_or_failure,
            package_name, package_version, tool_name, tool_version, platform_name, platform_version
       into project_uuid_var, execution_record_uuid_var,
            success_or_failure_var,
@@ -1880,11 +1941,83 @@ END;
 $$
 DELIMITER ;
 
+#CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
+# kill A-Run trigger
+DROP TRIGGER IF EXISTS execution_record_BUPD;
+DELIMITER $$
+CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW
+  BEGIN
+    DECLARE return_string VARCHAR(100);
+
+    SET NEW.update_user = user(), NEW.update_date = now();
+
+    # if execution_record is being deleted and it's still running, then kill it
+    if OLD.delete_date is null
+       and NEW.delete_date is not null
+       and not exists (select * from assessment.assessment_result where execution_record_uuid = NEW.execution_record_uuid)
+       then
+         call assessment.kill_assessment_run (NEW.execution_record_uuid, return_string);
+    end if;
+
+END;
+$$
+DELIMITER ;
+
+###################
+## Events
+##  Events in assessment_tables.sql will only be created on install, but untouched during upgrades.
+##  Events in assessment_procs.sql will created on installs, as well as dropped and recreated during upgrades.
+SET GLOBAL event_scheduler = ON;
+
+drop EVENT if exists process_execution_records;
+DELIMITER $$
+CREATE EVENT process_execution_records
+  ON SCHEDULE EVERY 3 SECOND
+  DO
+    BEGIN
+      DECLARE currently_processing_execution_records VARCHAR(1);
+      DECLARE currently_processing_execution_records_update_date TIMESTAMP;
+      #DECLARE counter INT;                                        ## log exec timing
+      #DECLARE start_time TIME;                                    ## log exec timing
+      #DECLARE end_time TIME;                                      ## log exec timing
+      #set start_time = now();                                     ## log exec timing
+      #insert into scheduler_logging (msg) values ('event start'); ## log exec timing
+
+      select value, update_date
+        into currently_processing_execution_records, currently_processing_execution_records_update_date
+        from system_status
+       where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
+
+      if currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) < '00:05:00' then
+        insert into sys_exec_cmd_log (cmd, caller) values ('Call to procedure process_execution_records skipped because procedure is currently running.', 'process_execution_records');
+        #insert into scheduler_logging (msg) values ('event skip'); ## log exec timing
+      elseif currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) > '00:05:00' then
+        begin
+          insert into sys_exec_cmd_log (cmd, caller) values ('process_execution_records running longer than 5 minutes.', 'process_execution_records');
+          update system_status set value = 'N' where status_key = 'CURRENTLY_PROCESSING_EXECUTION_RECORDS';
+          CALL assessment.process_execution_records();
+        end;
+      else
+        CALL assessment.process_execution_records();
+      end if;
+
+      #set end_time = now();                                                                                           ## log exec timing
+      #insert into scheduler_logging (msg) values (concat('event end - ',ifnull(TIMEDIFF(end_time, start_time),'0'))); ## log exec timing
+
+END
+$$
+DELIMITER ;
+
+
 ###################
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON assessment.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON assessment.* TO 'web'@'%';
+GRANT DELETE ON assessment.assessment_run TO 'web'@'%';
+GRANT DELETE ON assessment.run_request TO 'web'@'%';
+GRANT DELETE ON assessment.run_request_schedule TO 'web'@'%';
+GRANT DELETE ON assessment.group_list TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.launch_viewer TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.kill_assessment_run TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.select_system_setting TO 'web'@'%';
@@ -1894,15 +2027,15 @@ GRANT EXECUTE ON PROCEDURE assessment.download_results TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.select_execution_record TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.insert_results TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE assessment.insert_execution_event TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE assessment.set_system_status TO 'java_agent'@'%';
+GRANT SELECT ON assessment.exec_run_view TO 'java_agent'@'%';
+GRANT SELECT, UPDATE ON assessment.execution_record TO 'java_agent'@'%';
 
 # 'java_agent'@'localhost'
 GRANT EXECUTE ON PROCEDURE assessment.select_execution_record TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE assessment.insert_results TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE assessment.insert_execution_event TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE assessment.set_system_status TO 'java_agent'@'localhost';
+GRANT SELECT ON assessment.exec_run_view TO 'java_agent'@'localhost';
+GRANT SELECT, UPDATE ON assessment.execution_record TO 'java_agent'@'localhost';
 
 drop PROCEDURE if exists update_execution_run_status_test;
 
@@ -1930,7 +2063,7 @@ CREATE PROCEDURE update_execution_run_status_test (
             case
             when field_name_in = 'status'                       then update metric.metric_run set status                       = field_value_in where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'execute_node_architecture_id' then update metric.metric_run set execute_node_architecture_id = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'lines_of_code'                then update metric.metric_run set lines_of_code                = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'lines_of_code'                then update metric.metric_run set code_lines                   = field_value_in where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'cpu_utilization'              then update metric.metric_run set cpu_utilization              = field_value_in where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'vm_password'                  then update metric.metric_run set vm_password                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'vm_hostname'                  then update metric.metric_run set vm_hostname                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
@@ -1957,7 +2090,7 @@ CREATE PROCEDURE update_execution_run_status_test (
         case
         when field_name_in = 'status'                       then update assessment.execution_record set status                       = field_value_in where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'execute_node_architecture_id' then update assessment.execution_record set execute_node_architecture_id = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'lines_of_code'                then update assessment.execution_record set lines_of_code                = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'lines_of_code'                then update assessment.execution_record set code_lines                   = field_value_in where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'cpu_utilization'              then update assessment.execution_record set cpu_utilization              = field_value_in where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'vm_password'                  then update assessment.execution_record set vm_password                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'vm_hostname'                  then update assessment.execution_record set vm_hostname                  = field_value_in where execution_record_uuid = execution_record_uuid_in;

@@ -1,5 +1,3 @@
-#fedora-20-64
-
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
@@ -8,7 +6,7 @@
 # Insert platform if it doesn't already exist
 select count(1) into @platform_already_exists from platform_store.platform where platform_uuid = '8a51ecea-209d-11e3-9a3e-001a4a81450b';
 SET @s = IF(@platform_already_exists = 0,
-            'INSERT INTO platform_store.platform (platform_uuid, platform_sharing_status, name) VALUES (''8a51ecea-209d-11e3-9a3e-001a4a81450b'',''PUBLIC'',''Fedora Linux'');',
+            'INSERT INTO platform_store.platform (platform_uuid, platform_sharing_status, name) VALUES (''8a51ecea-209d-11e3-9a3e-001a4a81450b'',''PUBLIC'',''Fedora'');',
             'DO SLEEP(0)');
 PREPARE stmt1 FROM @s;
 EXECUTE stmt1;

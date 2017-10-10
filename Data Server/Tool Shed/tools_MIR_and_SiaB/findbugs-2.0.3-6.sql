@@ -13,5 +13,5 @@ set @tool_version_uuid = '4c1ec754-cb53-11e3-8775-001a4a81450b';
 set @version_no = '2';
 set @version_string = '2.0.3 (FindSecurityBugs 1.2)';
 set @comment_public = 'FindBugs+FindSecurityBugs';
-set @tool_path = '/swamp/store/SCATools/bundled/findbugs-2.0.3-5.tar.gz';
-set @checksum = '83a1e973a7a674e58c211432d5ac4977866d33edfb0d83e4e21c0f47271375c969934788fb246da13ea0a6aae7b69f9b42a806278ba59d60df37609e3279fa33';
+set @tool_path = '/swamp/store/SCATools/bundled/findbugs-2.0.3-6.tar.gz';
+set @checksum = '2380b69c50b7303a9d7d7d50c9f0512d62dbafa561b052e16f7feb8dd43cd79867b68b212dd1949caa8ae5cd8e96dbb7209615ce24c45764490815fd5afd2bfd';

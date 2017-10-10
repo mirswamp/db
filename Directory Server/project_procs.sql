@@ -13,20 +13,21 @@ CREATE OR REPLACE VIEW project_events as
          create_date as event_date,
          project_uid
     from project
+   where trial_project_flag = 0
   union
   select full_name, short_name,
          'revoked' as event_type,
          denial_date as event_date,
          project_uid
     from project
-   where denial_date is not null
+   where denial_date is not null and trial_project_flag = 0
   union
   select full_name, short_name,
          'deleted' as event_type,
          deactivation_date as event_date,
          project_uid
     from project
-   where deactivation_date is not null;
+   where deactivation_date is not null and trial_project_flag = 0;
 
 CREATE OR REPLACE VIEW personal_events as
   select user_uid, 'registered' as event_type,
@@ -46,10 +47,11 @@ drop VIEW if exists project_invitation_events;
 CREATE OR REPLACE VIEW user_project_events as
   select pu.user_uid, pu.create_date as event_date, 'Join' as event_type, p.project_uid
     from project.project_user pu inner join project.project p on p.project_uid = pu.project_uid
+    where p.trial_project_flag = 0
   union
   select pu.user_uid, pu.delete_date as event_date, 'Leave' as event_type, p.project_uid
     from project.project_user pu inner join project.project p on p.project_uid = pu.project_uid
-   where pu.delete_date is not null or pu.expire_date < now();
+   where pu.delete_date is not null or pu.expire_date < now() and p.trial_project_flag = 0;
 
 ###################
 ## Triggers
@@ -116,6 +118,18 @@ CREATE TRIGGER user_account_BUPD BEFORE UPDATE ON user_account FOR EACH ROW
   END;
 $$
 
+CREATE TRIGGER user_permission_BINS BEFORE INSERT ON user_permission FOR EACH ROW
+  BEGIN
+    DECLARE auto_approve_flag_var tinyint(1);
+    SET NEW.create_user = user(), NEW.create_date = now(), NEW.request_date = now();
+    # check auto_approve_flag
+    select auto_approve_flag into auto_approve_flag_var from permission where permission_code = NEW.permission_code;
+    if auto_approve_flag_var = 1 then
+      SET NEW.grant_date = now(), NEW.admin_comment = 'auto-approved';
+    end if;
+  END;
+$$
+
 CREATE TRIGGER user_permission_BUPD BEFORE UPDATE ON user_permission FOR EACH ROW
   BEGIN
     SET NEW.update_user = user(), NEW.update_date = now();
@@ -144,8 +158,8 @@ CREATE TRIGGER permission_BINS BEFORE INSERT ON permission FOR EACH ROW SET NEW.
 $$
 CREATE TRIGGER permission_BUPD BEFORE UPDATE ON permission FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
-CREATE TRIGGER user_permission_BINS BEFORE INSERT ON user_permission FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now(), NEW.request_date = now();
-$$
+#CREATE TRIGGER user_permission_BINS BEFORE INSERT ON user_permission FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now(), NEW.request_date = now();
+#$$
 #CREATE TRIGGER user_permission_BUPD BEFORE UPDATE ON user_permission FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 #$$
 CREATE TRIGGER user_permission_project_BINS BEFORE INSERT ON user_permission_project FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
