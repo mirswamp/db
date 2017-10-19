@@ -162,4 +162,3 @@ DELIMITER ;
 # 'web'@'%'
 GRANT SELECT ON project.* TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.list_projects_by_member TO 'web'@'%';
-GRANT EXECUTE ON PROCEDURE project.list_tools_by_owner TO 'web'@'%';

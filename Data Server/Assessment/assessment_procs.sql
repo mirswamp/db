@@ -86,6 +86,7 @@ inner join tool_shed.tool_version tool_ver on tool_ver.tool_version_uuid = er.to
 inner join tool_shed.tool on tool.tool_uuid = tool_ver.tool_uuid
 inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = er.platform_version_uuid
 left outer join package_store.package_version_dependency pvd on er.package_version_uuid = pvd.package_version_uuid and er.platform_version_uuid = pvd.platform_version_uuid
+where er.status not like 'Finished%'
 union
 select
 mr.metric_run_uuid as execution_record_uuid,
@@ -131,6 +132,7 @@ inner join metric.metric_tool_version mtv on mtv.metric_tool_version_uuid = mr.t
 inner join metric.metric_tool mt on mt.metric_tool_uuid = mtv.metric_tool_uuid
 inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = mr.platform_version_uuid
 left outer join package_store.package_version_dependency pvd on mr.package_version_uuid = pvd.package_version_uuid and mr.platform_version_uuid = pvd.platform_version_uuid
+where mr.status not like 'Finished%'
 ;
 
 ####################

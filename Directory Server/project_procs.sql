@@ -347,7 +347,6 @@ CREATE EVENT deactivate_test_projects
 # 'web'@'%'
 GRANT SELECT, INSERT, UPDATE, DELETE ON project.* TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.list_projects_by_member TO 'web'@'%';
-#GRANT EXECUTE ON PROCEDURE project.list_tools_by_owner TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.remove_user_from_all_projects TO 'web'@'%';
 
 
