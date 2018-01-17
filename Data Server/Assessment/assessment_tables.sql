@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists assessment;
@@ -150,6 +150,7 @@ CREATE TABLE assessment_result (
   platform_version_uuid        VARCHAR(45)                                  COMMENT 'version uuid',
   tool_version_uuid            VARCHAR(45)                                  COMMENT 'version uuid',
   package_version_uuid         VARCHAR(45)                                  COMMENT 'version uuid',
+  tool_uuid                    VARCHAR(45)                                  COMMENT 'tool uuid',
   create_user                  VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user                  VARCHAR(25)                                  COMMENT 'db user that last updated record',

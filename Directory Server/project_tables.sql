@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists project;
@@ -23,6 +23,7 @@ CREATE TABLE project (
   create_date                TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date project created',
   denial_date                TIMESTAMP NULL DEFAULT NULL         COMMENT 'date project denied',
   deactivation_date          TIMESTAMP NULL DEFAULT NULL         COMMENT 'date of retirement',
+  delete_date            TIMESTAMP NULL DEFAULT NULL             COMMENT 'soft delete',
   PRIMARY KEY (project_id)
  ) COMMENT='contains project info';
 
@@ -65,6 +66,7 @@ CREATE TABLE project_invitation (
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP     COMMENT 'date invitation created',
   accept_date            TIMESTAMP NULL DEFAULT NULL             COMMENT 'date invitation accepted',
   decline_date           TIMESTAMP NULL DEFAULT NULL             COMMENT 'date invitation declined',
+  delete_date            TIMESTAMP NULL DEFAULT NULL             COMMENT 'soft delete',
   PRIMARY KEY (invitation_id),
     CONSTRAINT fk_project_invitation FOREIGN KEY (project_uid) REFERENCES project (project_uid)
  ) COMMENT='Project invitations';
@@ -85,6 +87,7 @@ CREATE TABLE user_account (
   create_date               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user               VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (user_uid)
  )COMMENT='user account info';
 
@@ -122,6 +125,7 @@ CREATE TABLE permission (
   create_date               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user               VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (permission_code)
  )COMMENT='lists all possible user permissions';
 
@@ -169,6 +173,7 @@ CREATE TABLE user_permission_project (
   create_date                 TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user                 VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (user_permission_project_uid),
     CONSTRAINT fk_usr_prmssn_prjct FOREIGN KEY (user_permission_uid) REFERENCES user_permission (user_permission_uid) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_usr_prmssn_prjct_to_prjct FOREIGN KEY (project_uid) REFERENCES project (project_uid) ON DELETE CASCADE ON UPDATE CASCADE
@@ -182,6 +187,7 @@ CREATE TABLE user_permission_package (
   create_date                 TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user                 VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (user_permission_package_uid),
     CONSTRAINT fk_usr_prmssn_pkg FOREIGN KEY (user_permission_uid) REFERENCES user_permission (user_permission_uid) ON DELETE CASCADE ON UPDATE CASCADE
  )COMMENT='packages to which user permission applies';
@@ -194,6 +200,7 @@ CREATE TABLE policy (
   create_date               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user               VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (policy_code)
  )COMMENT='Use Policies or License Agreements';
 
@@ -206,6 +213,7 @@ CREATE TABLE user_policy (
   create_date               TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user               VARCHAR(25)                                  COMMENT 'db user that last updated record',
   update_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date               TIMESTAMP NULL DEFAULT NULL                  COMMENT 'soft delete',
   PRIMARY KEY (user_policy_uid)
  )COMMENT='user policy info';
 
@@ -217,6 +225,7 @@ CREATE TABLE admin_invitation (
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP     COMMENT 'date invitation created',
   accept_date            TIMESTAMP NULL DEFAULT NULL             COMMENT 'date invitation accepted',
   decline_date           TIMESTAMP NULL DEFAULT NULL             COMMENT 'date invitation declined',
+  delete_date            TIMESTAMP NULL DEFAULT NULL             COMMENT 'soft delete',
   PRIMARY KEY (admin_invitation_id)
  ) COMMENT='Admin invitations';
 
@@ -228,6 +237,7 @@ CREATE TABLE email_verification (
   email                  VARCHAR(100)                        COMMENT 'email address',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   verify_date            TIMESTAMP NULL DEFAULT NULL         COMMENT 'date email verified, null if not verified',
+  delete_date            TIMESTAMP NULL DEFAULT NULL         COMMENT 'soft delete',
   PRIMARY KEY (email_verification_id)
  ) COMMENT='email verifications';
 
@@ -236,6 +246,7 @@ CREATE TABLE password_reset (
   user_uid               VARCHAR(45)                         COMMENT 'user uuid',
   password_reset_key     VARCHAR(100)                        COMMENT 'reset key',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+  delete_date            TIMESTAMP NULL DEFAULT NULL         COMMENT 'soft delete',
   PRIMARY KEY (password_reset_uuid)
  ) COMMENT='Password Reset keys';
 
@@ -243,9 +254,9 @@ CREATE TABLE restricted_domains (
   restricted_domain_id   INT  NOT NULL  AUTO_INCREMENT       COMMENT 'internal id',
   domain_name            VARCHAR(127)                        COMMENT 'domain name',
   description            VARCHAR(255)                        COMMENT 'domain description',
-  created_at             TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date created',
-  updated_at             TIMESTAMP NULL DEFAULT NULL         COMMENT 'date updated',
-  deleted_at             TIMESTAMP NULL DEFAULT NULL         COMMENT 'date deleted',
+  create_date             TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date created',
+  update_date             TIMESTAMP NULL DEFAULT NULL         COMMENT 'date updated',
+  delete_date             TIMESTAMP NULL DEFAULT NULL         COMMENT 'date deleted',
   PRIMARY KEY (restricted_domain_id)
  ) COMMENT='Restricted Domains';
 

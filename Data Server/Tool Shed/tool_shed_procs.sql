@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 use tool_shed;
 
@@ -192,35 +192,6 @@ $$
 DELIMITER ;
 
 ####################################################
-drop PROCEDURE if exists select_all_pub_tools_and_vers;
-DELIMITER $$
-CREATE PROCEDURE select_all_pub_tools_and_vers ()
-  BEGIN
-    select tool.tool_uuid,
-           tool_version.tool_version_uuid,
-           tool.name as tool_name,
-           tool.tool_sharing_status,
-           tool_version.version_string,
-           null as platform_id,
-           tool_version.comment_public as public_version_comment,
-           tool_version.comment_private as private_version_comment,
-           tool_version.tool_path,
-           tool_version.checksum,
-           tool.is_build_needed as IsBuildNeeded,
-           tool_version.tool_executable,
-           tool_version.tool_arguments,
-           tool_version.tool_directory,
-           tl.package_type_id,
-           pt.name as package_type_name
-      from tool
-     inner join tool_version on tool.tool_uuid = tool_version.tool_uuid
-     inner join tool_language tl on tool_version.tool_version_uuid = tl.tool_version_uuid
-     inner join package_store.package_type pt on tl.package_type_id = pt.package_type_id
-     where tool.tool_sharing_status = 'PUBLIC';
-END
-$$
-DELIMITER ;
-####################################################
 drop PROCEDURE if exists select_tool_version;
 DELIMITER $$
 CREATE PROCEDURE select_tool_version (
@@ -275,74 +246,6 @@ CREATE PROCEDURE select_tool_version (
          inner join tool_version on tool.tool_uuid = tool_version.tool_uuid
          where tool_version.tool_version_uuid = tool_version_uuid_in;
     end if;
-END
-$$
-DELIMITER ;
-####################################################
-drop PROCEDURE if exists update_tool_cksum;
-DELIMITER $$
-CREATE PROCEDURE update_tool_cksum (
-    IN tool_version_uuid_in VARCHAR(45),
-    IN checksum_in VARCHAR(200),
-    OUT return_string varchar(100)
-)
-  BEGIN
-    DECLARE row_count_int int;
-    set return_string = 'ERROR';
-
-    select count(1)
-      into row_count_int
-      from tool_version
-     where tool_version_uuid = tool_version_uuid_in;
-
-   if row_count_int > 1 then
-     set return_string = 'ERROR: TOO MANY ROWS';
-   elseif row_count_int = 0 then
-     set return_string = 'ERROR: NO RECORD FOUND';
-   elseif row_count_int = 1 then
-     BEGIN
-       update tool_version
-          set checksum = checksum_in
-        where tool_version_uuid = tool_version_uuid_in;
-       commit;
-
-       set return_string = 'SUCCESS';
-     END;
-   end if;
-END
-$$
-DELIMITER ;
-####################################################
-drop PROCEDURE if exists update_tool_path;
-DELIMITER $$
-CREATE PROCEDURE update_tool_path (
-    IN tool_version_uuid_in VARCHAR(45),
-    IN path_in VARCHAR(200),
-    OUT return_string varchar(100)
-)
-  BEGIN
-    DECLARE row_count_int int;
-    set return_string = 'ERROR';
-
-    select count(1)
-      into row_count_int
-      from tool_version
-     where tool_version_uuid = tool_version_uuid_in;
-
-   if row_count_int > 1 then
-     set return_string = 'ERROR: TOO MANY ROWS';
-   elseif row_count_int = 0 then
-     set return_string = 'ERROR: NO RECORD FOUND';
-   elseif row_count_int = 1 then
-     BEGIN
-       update tool_version
-          set tool_path = path_in
-        where tool_version_uuid = tool_version_uuid_in;
-       commit;
-
-       set return_string = 'SUCCESS';
-     END;
-   end if;
 END
 $$
 DELIMITER ;
@@ -477,14 +380,8 @@ GRANT EXECUTE ON PROCEDURE tool_shed.list_tools_by_project_user TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE tool_shed.list_tools_by_owner TO 'web'@'%';
 
 # 'java_agent'@'%'
-GRANT EXECUTE ON PROCEDURE tool_shed.select_all_pub_tools_and_vers TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE tool_shed.select_tool_version TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE tool_shed.update_tool_cksum TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE tool_shed.update_tool_path TO 'java_agent'@'%';
 
 # 'java_agent'@'localhost'
-GRANT EXECUTE ON PROCEDURE tool_shed.select_all_pub_tools_and_vers TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE tool_shed.select_tool_version TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE tool_shed.update_tool_cksum TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE tool_shed.update_tool_path TO 'java_agent'@'localhost';
 

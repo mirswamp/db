@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 drop database if exists tool_shed;
 create database tool_shed;
@@ -16,6 +16,7 @@ CREATE TABLE tool (
   tool_sharing_status  VARCHAR(25) NOT NULL DEFAULT 'PRIVATE'       COMMENT 'private, shared, public or retired',
   is_build_needed      TINYINT                                      COMMENT 'Does tool analyze build output instead of source',
   policy_code          VARCHAR(100)                                 COMMENT 'if tool requires policy',
+  exclude_when_user_selects_all tinyint(1) NOT NULL DEFAULT 0       COMMENT 'Exclude when user selects all tools: 0=false 1=true',
   create_user          VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user          VARCHAR(25)                                  COMMENT 'db user that last updated record',

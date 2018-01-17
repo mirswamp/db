@@ -1,9 +1,10 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 use tool_shed;
+drop procedure if exists remove_tool;
 delimiter //
 
 create procedure remove_tool(
@@ -16,7 +17,7 @@ create procedure remove_tool(
   IN tool_version_uuid_in VARCHAR(45),
   IN version_no_in INT,
   IN version_string_in VARCHAR(100),
-  IN comment_public_in VARCHAR(200),
+  IN notes_in VARCHAR(200),
   IN tool_path_in VARCHAR(200),
   IN checksum_in VARCHAR(200),
   IN metric_tool_in VARCHAR(12)
@@ -44,7 +45,7 @@ end;
 delimiter ;
 
 -- Execute the procedure
-call remove_tool(@tool_uuid,@tool_owner_uuid,@name,@description,@tool_sharing_status,@policy_code,@tool_version_uuid,@version_no,@version_string,@comment_public,@tool_path,@checksum,@metric_tool);
+call remove_tool(@tool_uuid,@tool_owner_uuid,@name,@description,@tool_sharing_status,@policy_code,@tool_version_uuid,@version_no,@version_string,@notes,@tool_path,@checksum,@metric_tool);
 
 -- Drop the procedure
 drop procedure remove_tool;

@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 # before running this, set the following session variables:
   #set @tool_version_uuid = 'XXXX';
@@ -15,7 +15,4 @@ set @name = 'GrammaTech CodeSonar';
 set @description = 'GrammaTech\'s flagship static analysis SAST tool. <a href="https://www.grammatech.com/products/codesonar">https://www.grammatech.com/products/codesonar</a>';
 set @tool_sharing_status = 'PUBLIC';
 set @policy_code = null;
-set @comment_public = '';
-
-delete from tool_shed.tool_language where tool_version_uuid = @tool_version_uuid;
-insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values (@tool_uuid, @tool_version_uuid, 1);
+set @notes = '';

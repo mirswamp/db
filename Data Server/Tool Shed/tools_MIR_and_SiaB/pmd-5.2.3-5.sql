@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 set @tool_uuid = '163f2b01-156e-11e3-a239-001a4a81450b';
 set @tool_owner_uuid = '80835e30-d527-11e2-8b8b-0800200c9a66';
@@ -12,6 +12,6 @@ set @policy_code = null;
 set @tool_version_uuid = 'bdaf4b93-a811-11e4-a335-001a4a81450b';
 set @version_no = '3';
 set @version_string = '5.2.3';
-set @comment_public = 'PMD 5.2.3';
+set @notes = 'PMD 5.2.3';
 set @tool_path = '/swamp/store/SCATools/bundled/pmd-5.2.3-5.tar.gz';
 set @checksum = '57c95329a4cb07b6139a1622b2ae8e0b989776eb10ae8b6892b8f143ae162eeae04a69445955b5175bb43e0e588c6d81a8803e3197d364d1a29aed23f9a6aa8b';

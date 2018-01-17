@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 use project;
 
@@ -301,20 +301,7 @@ END
 $$
 DELIMITER ;
 drop PROCEDURE if exists deactivate_test_projects;
-/*
-DELIMITER $$
-CREATE PROCEDURE deactivate_test_projects ()
-  BEGIN
-    # deactivate all test projects older than X days
-    update project
-       set deactivation_date = now()
-     where trial_project_flag = 1
-       and deactivation_date is null
-       and create_date < CURDATE() - INTERVAL 14 DAY;
-END
-$$
-DELIMITER ;
-*/
+
 drop PROCEDURE if exists remove_user_from_all_projects;
 DELIMITER $$
 CREATE PROCEDURE remove_user_from_all_projects (
@@ -331,16 +318,6 @@ END
 $$
 DELIMITER ;
 
-###################
-## Events
-SET GLOBAL event_scheduler = ON;
-/*
-drop EVENT if exists deactivate_test_projects;
-CREATE EVENT deactivate_test_projects
-  ON SCHEDULE EVERY 12 HOUR
-  #STARTS CURRENT_TIMESTAMP + 10 HOUR
-  DO CALL project.deactivate_test_projects();
-*/
 ###################
 ## Grants
 

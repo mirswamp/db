@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 use package_store;
 
@@ -554,41 +554,6 @@ $$
 DELIMITER ;
 
 ####################################################
-drop PROCEDURE if exists select_all_pub_pkgs_and_vers;
-DELIMITER $$
-CREATE PROCEDURE select_all_pub_pkgs_and_vers ()
-  BEGIN
-    select package.package_uuid,
-           package_version.package_version_uuid,
-           package.name as package_name,
-           (select pt.name from package_type pt where pt.package_type_id = package.package_type_id) as package_type,
-           package_version.version_sharing_status,
-           package_version.version_string,
-           package_version.platform_id,
-           package_version.notes as public_version_comment,
-           null as private_version_comment,
-           package_version.package_path,
-           package_version.checksum,
-           package_version.source_path,
-           package_version.build_file,
-           package_version.build_system,
-           package_version.build_cmd,
-           package_version.build_target,
-           package_version.build_dir,
-           package_version.build_opt,
-           package_version.config_cmd,
-           package_version.config_opt,
-           package_version.config_dir,
-           package_version.bytecode_class_path,
-           package_version.bytecode_aux_class_path,
-           package_version.bytecode_source_path
-      from package
-     inner join package_version on package.package_uuid = package_version.package_uuid;
-END
-$$
-DELIMITER ;
-
-####################################################
 drop PROCEDURE if exists select_pkg_version;
 DELIMITER $$
 CREATE PROCEDURE select_pkg_version (
@@ -656,76 +621,6 @@ CREATE PROCEDURE fetch_pkg_dependency (
     else set dependency_found_flag = 'Y';
     end if;
 
-END
-$$
-DELIMITER ;
-
-####################################################
-drop PROCEDURE if exists update_package_cksum;
-DELIMITER $$
-CREATE PROCEDURE update_package_cksum (
-    IN package_version_uuid_in VARCHAR(45),
-    IN checksum_in VARCHAR(200),
-    OUT return_string varchar(100)
-)
-  BEGIN
-    DECLARE row_count_int int;
-    set return_string = 'ERROR';
-
-    select count(1)
-      into row_count_int
-      from package_version
-     where package_version_uuid = package_version_uuid_in;
-
-   if row_count_int > 1 then
-     set return_string = 'ERROR: TOO MANY ROWS';
-   elseif row_count_int = 0 then
-     set return_string = 'ERROR: NO RECORD FOUND';
-   elseif row_count_int = 1 then
-     BEGIN
-       update package_version
-          set checksum = checksum_in
-        where package_version_uuid = package_version_uuid_in;
-       commit;
-
-       set return_string = 'SUCCESS';
-     END;
-   end if;
-END
-$$
-DELIMITER ;
-
-############################################
-drop PROCEDURE if exists update_package_path;
-DELIMITER $$
-CREATE PROCEDURE update_package_path (
-    IN package_version_uuid_in VARCHAR(45),
-    IN path_in VARCHAR(200),
-    OUT return_string varchar(100)
-)
-  BEGIN
-    DECLARE row_count_int int;
-    set return_string = 'ERROR';
-
-    select count(1)
-      into row_count_int
-      from package_version
-     where package_version_uuid = package_version_uuid_in;
-
-   if row_count_int > 1 then
-     set return_string = 'ERROR: TOO MANY ROWS';
-   elseif row_count_int = 0 then
-     set return_string = 'ERROR: NO RECORD FOUND';
-   elseif row_count_int = 1 then
-     BEGIN
-       update package_version
-          set package_path = path_in
-        where package_version_uuid = package_version_uuid_in;
-       commit;
-
-       set return_string = 'SUCCESS';
-     END;
-   end if;
 END
 $$
 DELIMITER ;
@@ -939,15 +834,9 @@ GRANT EXECUTE ON PROCEDURE package_store.list_pkg_vers_by_owner TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.list_pkg_by_user TO 'web'@'%';
 
 # 'java_agent'@'%'
-GRANT EXECUTE ON PROCEDURE package_store.select_all_pub_pkgs_and_vers TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.select_pkg_version TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.fetch_pkg_dependency TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE package_store.update_package_cksum TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE package_store.update_package_path TO 'java_agent'@'%';
 
 # 'java_agent'@'localhost'
-GRANT EXECUTE ON PROCEDURE package_store.select_all_pub_pkgs_and_vers TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE package_store.select_pkg_version TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE package_store.fetch_pkg_dependency TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE package_store.update_package_cksum TO 'java_agent'@'localhost';
-GRANT EXECUTE ON PROCEDURE package_store.update_package_path TO 'java_agent'@'localhost';

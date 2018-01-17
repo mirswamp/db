@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2017 Software Assurance Marketplace
+# Copyright 2012-2018 Software Assurance Marketplace
 
 use assessment;
 
@@ -77,7 +77,8 @@ plt_ver.platform_path,
 pvd.dependency_list,
 case when tool_ver.tool_version_uuid = 'a6d2a89e-4a1c-11e7-a337-001a4a81450b'
      then (select up.meta_information from project.user_permission up where up.user_uid = er.user_uuid and up.permission_code = 'sonatype-user')
-     else null end as user_cnf
+     else null end as user_cnf,
+er.notify_when_complete_flag
 from assessment.execution_record er
 inner join package_store.package_version pkg_ver on pkg_ver.package_version_uuid = er.package_version_uuid
 inner join package_store.package pkg on pkg.package_uuid = pkg_ver.package_uuid
@@ -123,7 +124,8 @@ mtv.tool_path,
 mtv.checksum as tool_checksum,
 plt_ver.platform_path,
 pvd.dependency_list,
-null as user_cnf
+null as user_cnf,
+0 as notify_when_complete_flag
 from metric.metric_run mr
 inner join package_store.package_version pkg_ver on pkg_ver.package_version_uuid = mr.package_version_uuid
 inner join package_store.package pkg on pkg.package_uuid = pkg_ver.package_uuid
@@ -805,6 +807,7 @@ CREATE PROCEDURE insert_results (
     DECLARE log_filename VARCHAR(200);
     DECLARE result_incoming_dir VARCHAR(200);
     DECLARE rmdir_return_code INT;
+    DECLARE notify_return_code INT;
 
     if execution_record_uuid_in like 'M-%'
       then
@@ -949,10 +952,10 @@ CREATE PROCEDURE insert_results (
               );
 
             # Notify user
-            if (notify_when_complete_flag_var = 1) then
-              insert into notification (notification_uuid, user_uuid, notification_impetus, relevant_uuid, transmission_medium)
-                values (uuid(), user_uuid_var, 'Assessment result available', assessment_result_uuid, 'EMAIL');
-            end if;
+            #if (notify_when_complete_flag_var = 1) then
+            #  insert into notification (notification_uuid, user_uuid, notification_impetus, relevant_uuid, transmission_medium)
+            #    values (uuid(), user_uuid_var, 'Assessment result available', assessment_result_uuid, 'EMAIL');
+            #end if;
 
             if lines_of_code_in is not null then
               update assessment.execution_record
@@ -979,23 +982,11 @@ DELIMITER $$
 ############################################
 CREATE PROCEDURE update_execution_run_status (
     IN execution_record_uuid_in VARCHAR(45),
-    IN status_in VARCHAR(100),
-    IN run_start_time_in TIMESTAMP,
-    IN run_end_time_in TIMESTAMP,
-    IN exec_node_architecture_id_in VARCHAR(128),
-    IN lines_of_code_in INT,
-    IN cpu_utilization_in VARCHAR(32),
-    IN vm_hostname_in VARCHAR(100),
-    IN vm_username_in VARCHAR(50),
-    IN vm_password_in VARCHAR(50),
-    IN vm_ip_address_in VARCHAR(50),
-    IN vm_image_in VARCHAR(100),
-    IN tool_filename_in VARCHAR(100),
+    IN field_name_in VARCHAR(45),
+    IN field_value_in VARCHAR(128),
     OUT return_string varchar(100)
   )
   BEGIN
-    DECLARE queued_duration_var VARCHAR(12);
-    DECLARE execution_duration_var VARCHAR(12);
     DECLARE row_count_int int;
 
     # Metric Runs
@@ -1006,38 +997,24 @@ CREATE PROCEDURE update_execution_run_status (
           into row_count_int
           from metric.metric_run
          where metric_run_uuid = execution_record_uuid_in;
-
         if row_count_int = 1 then
-          BEGIN
-            # vm_ip_address is reported seperately
-            # So, if vm_ip_address_in is not null, then update only vm_ip_address
-            # else do the "regular" update
-            if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
-              update metric.metric_run
-                 set vm_ip_address = vm_ip_address_in
-               where metric_run_uuid = execution_record_uuid_in;
-            else
-              update metric.metric_run
-                 set status = status_in,
-                     run_date = run_start_time_in,
-                     completion_date = run_end_time_in,
-                     queued_duration = timediff(run_start_time_in, create_date),
-                     execution_duration = timediff(run_end_time_in, run_start_time_in),
-                     execute_node_architecture_id = exec_node_architecture_id_in,
-                     code_lines = lines_of_code_in,
-                     cpu_utilization = cpu_utilization_in,
-                     vm_password = vm_password_in,
-                     #dont overwrite if incoming value is blank
-                     vm_hostname   = case when vm_hostname_in   = '' then vm_hostname   else vm_hostname_in end,
-                     vm_username   = case when vm_username_in   = '' then vm_username   else vm_username_in end,
-                     vm_image      = case when vm_image_in      = '' then vm_image      else vm_image_in    end,
-                     vm_ip_address = case when vm_ip_address_in = '' then vm_ip_address else vm_username_in end,
-                     tool_filename = case when tool_filename_in = '' then tool_filename else tool_filename_in end
-               where metric_run_uuid = execution_record_uuid_in;
-            end if;
-
+          begin
+            case
+            when field_name_in = 'status'                       then update metric.metric_run set status                       = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'execute_node_architecture_id' then update metric.metric_run set execute_node_architecture_id = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'lines_of_code'                then update metric.metric_run set code_lines                   = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'cpu_utilization'              then update metric.metric_run set cpu_utilization              = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'vm_password'                  then update metric.metric_run set vm_password                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'vm_hostname'                  then update metric.metric_run set vm_hostname                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'vm_username'                  then update metric.metric_run set vm_username                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'vm_image'                     then update metric.metric_run set vm_image                     = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'vm_ip_address'                then update metric.metric_run set vm_ip_address                = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'tool_filename'                then update metric.metric_run set tool_filename                = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'run_date'                     then update metric.metric_run set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'completion_date'              then update metric.metric_run set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where metric_run_uuid = execution_record_uuid_in;
+            end case;
             set return_string = 'SUCCESS';
-          END;
+          end;
         else
           set return_string = 'ERROR: Record Not Found';
         end if;
@@ -1048,46 +1025,23 @@ CREATE PROCEDURE update_execution_run_status (
         into row_count_int
         from assessment.execution_record
        where execution_record_uuid = execution_record_uuid_in;
-
       if row_count_int = 1 then
-        BEGIN
-          # Verbose Logging
-          # insert into assessment.execution_run_status_log
-          #   (execution_record_uuid, status, run_start_time, run_end_time, exec_node_architecture_id,
-          #    lines_of_code, cpu_utilization, vm_hostname, vm_username, vm_password, vm_ip_address)
-          #   values
-          #   (execution_record_uuid_in, status_in, run_start_time_in, run_end_time_in, exec_node_architecture_id_in,
-          #    lines_of_code_in, cpu_utilization_in, vm_hostname_in, vm_username_in, vm_password_in, vm_ip_address_in);
-
-          # vm_ip_address is reported seperately
-          # So, if vm_ip_address_in is not null, then update only vm_ip_address
-          # else do the "regular" update
-          if (vm_ip_address_in != '' and vm_ip_address_in is not null) then
-            update assessment.execution_record
-               set vm_ip_address = vm_ip_address_in
-             where execution_record_uuid = execution_record_uuid_in;
-          else
-            update assessment.execution_record
-               set status = status_in,
-                   run_date = run_start_time_in,
-                   completion_date = run_end_time_in,
-                   queued_duration = timediff(run_start_time_in, create_date),
-                   execution_duration = timediff(run_end_time_in, run_start_time_in),
-                   execute_node_architecture_id = exec_node_architecture_id_in,
-                   code_lines = lines_of_code_in,
-                   cpu_utilization = cpu_utilization_in,
-                   vm_password = vm_password_in,
-                   #dont overwrite if incoming value is blank
-                   vm_hostname   = case when vm_hostname_in   = '' then vm_hostname   else vm_hostname_in end,
-                   vm_username   = case when vm_username_in   = '' then vm_username   else vm_username_in end,
-                   vm_image      = case when vm_image_in      = '' then vm_image      else vm_image_in    end,
-                   vm_ip_address = case when vm_ip_address_in = '' then vm_ip_address else vm_username_in end,
-                   tool_filename = case when tool_filename_in = '' then tool_filename else tool_filename_in end
-             where execution_record_uuid = execution_record_uuid_in;
-          end if;
-
-          set return_string = 'SUCCESS';
-        END;
+        case
+        when field_name_in = 'status'                       then update assessment.execution_record set status                       = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'execute_node_architecture_id' then update assessment.execution_record set execute_node_architecture_id = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'lines_of_code'                then update assessment.execution_record set code_lines                   = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'cpu_utilization'              then update assessment.execution_record set cpu_utilization              = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'vm_password'                  then update assessment.execution_record set vm_password                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'vm_hostname'                  then update assessment.execution_record set vm_hostname                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'vm_username'                  then update assessment.execution_record set vm_username                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'vm_image'                     then update assessment.execution_record set vm_image                     = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'vm_ip_address'                then update assessment.execution_record set vm_ip_address                = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'tool_filename'                then update assessment.execution_record set tool_filename                = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'run_date'                     then update assessment.execution_record set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'completion_date'              then update assessment.execution_record set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where execution_record_uuid = execution_record_uuid_in;
+        end case;
+        update assessment.execution_record set vm_password = null where status like 'Finished%' and execution_record_uuid = execution_record_uuid_in;
+        set return_string = 'SUCCESS';
       else
         set return_string = 'ERROR: Record Not Found';
       end if;
@@ -1096,8 +1050,6 @@ CREATE PROCEDURE update_execution_run_status (
 END
 $$
 DELIMITER ;
-
-drop PROCEDURE if exists insert_execution_event;
 
 drop PROCEDURE if exists launch_viewer;
 DELIMITER $$
@@ -1528,13 +1480,6 @@ CREATE PROCEDURE `download_results`(
     DECLARE copy_return_code INT;
     DECLARE chmod_return_code INT;
 
-    -- Temporary variables for special handling of commercial tools
-    DECLARE tool_version_uuid_in VARCHAR(45);
-    DECLARE tool_uuid_in VARCHAR(45);
-    DECLARE policy_code_in VARCHAR(100);
-    DECLARE non_commercial_tool_flag CHAR(1);
-
-
     select project_uuid
       into project_uuid_in
       from assessment.assessment_result
@@ -1559,33 +1504,9 @@ CREATE PROCEDURE `download_results`(
       from project.project
      where project_uid = project_uuid_in;
 
-    -- Special handling of commercial tools. For now, do not allow downloading of any results
-    -- generated by commercial tools since users may share SCARF results they do not have
-    -- permission to share. So only allow downloading of results where 'policy_code' is NULL.
-    -- First, get the tool_version_uuid associated with the passed-in assessment_result_uuid.
-    select tool_version_uuid
-      into tool_version_uuid_in
-      from assessment.assessment_result
-     where assessment_result_uuid = assessment_result_uuid_in;
-
-    -- Use the found tool_version_uuid_in to get the associated tool_uuid.
-    select tool_uuid
-      into tool_uuid_in
-      from tool_shed.tool_version
-     where tool_version_uuid = tool_version_uuid_in;
-
-    -- For the found tool_uuid_in, a NULL policy_code indicates a non-commercial tool.
-    select distinct 'Y'
-      into non_commercial_tool_flag
-      from tool_shed.tool tst
-     where tst.tool_uuid = tool_uuid_in
-       and tst.policy_code is null;
-
-
     if project_user_valid_flag = 'Y'
        and user_account_valid_flag = 'Y'
        and row_count_project_int = 1
-       and non_commercial_tool_flag = 'Y'
     then
       BEGIN
 
@@ -1648,7 +1569,6 @@ CREATE PROCEDURE `download_results`(
     elseif row_count_project_int                != 1   then set return_string = 'ERROR: PROJECT NOT FOUND';
     elseif ifnull(user_account_valid_flag,'N')  != 'Y' then set return_string = 'ERROR: USER ACCOUNT NOT VALID';
     elseif ifnull(project_user_valid_flag,'N')  != 'Y' then set return_string = 'ERROR: USER PROJECT PERMISSION NOT VALID';
-    elseif ifnull(non_commercial_tool_flag,'N') != 'Y' then set return_string = 'ERROR: DOWNLOADING OF COMMERCIAL TOOL RESULTS NOT ALLOWED';
     else set return_string = 'ERROR: UNSPECIFIED ERROR';
     end if;
 
@@ -1674,45 +1594,28 @@ DELIMITER ;
 drop PROCEDURE if exists kill_assessment_run;
 DELIMITER $$
 ############################################
+## This procedure will pass along any kind of uuid. It doesn't care if it's an A-Run, M-Run, V-Run or bogus.
 CREATE PROCEDURE kill_assessment_run (
     IN execution_record_uuid_in VARCHAR(45),
     OUT return_string varchar(100)
   )
   BEGIN
-    DECLARE queued_duration_var VARCHAR(12);
-    DECLARE execution_duration_var VARCHAR(12);
-    DECLARE row_count_int int;
     DECLARE cmd VARCHAR(500);
     DECLARE cmd_return VARCHAR(100);
 
-    # verify exists 1 matching execution_record
-    select count(1)
-      into row_count_int
-      from assessment.execution_record
-     where execution_record_uuid = execution_record_uuid_in;
+    # Call Perl Script
+    set cmd = null;
+    set cmd = CONCAT(' /usr/local/bin/kill_run',
+                     ifnull(concat(' --execution_record_uuid \'', execution_record_uuid_in,'\''),''),
+                     '');
+    insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'kill_assessment_run');
+    set cmd_return = sys_exec(cmd);
 
-    if row_count_int = 1 then
-      BEGIN
-
-        # Call Perl Script
-        set cmd = null;
-        set cmd = CONCAT(' /usr/local/bin/kill_run',
-                         ifnull(concat(' --execution_record_uuid \'', execution_record_uuid_in,'\''),''),
-                         '');
-
-        # Verbose Logging
-          insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'kill_assessment_run');
-        set cmd_return = sys_exec(cmd);
-
-        # if successful, then update record and tell Web success
-        if cmd_return != 0 then set return_string = 'ERROR';
-        else                    set return_string = 'SUCCESS';
-        end if;
-
-      END;
-    else
-      set return_string = 'ERROR: Record Not Found';
+    # Report if system call sent sucessfully or not. Doesn't mean perl script succeded.
+    if cmd_return != 0 then set return_string = 'ERROR';
+    else                    set return_string = 'SUCCESS';
     end if;
+
 
 END
 $$
@@ -1801,7 +1704,7 @@ CREATE TRIGGER execution_record_BINS BEFORE INSERT ON execution_record FOR EACH 
 $$
 #CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 #$$
-CREATE TRIGGER assessment_result_BINS BEFORE INSERT ON assessment_result FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
+CREATE TRIGGER assessment_result_BINS BEFORE INSERT ON assessment_result FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now(), NEW.tool_uuid = (select tv.tool_uuid from tool_shed.tool_version tv where tv.tool_version_uuid = NEW.tool_version_uuid);
 $$
 CREATE TRIGGER assessment_result_BUPD BEFORE UPDATE ON assessment_result FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
@@ -1880,68 +1783,6 @@ DELIMITER ;
 
 # notify user trigger
 DROP TRIGGER IF EXISTS notification_AINS;
-DELIMITER $$
-CREATE TRIGGER notification_AINS AFTER INSERT ON notification FOR EACH ROW
-  BEGIN
-    DECLARE project_uuid_var VARCHAR(45);
-    DECLARE execution_record_uuid_var VARCHAR(45);
-    DECLARE success_or_failure_var VARCHAR(15);
-    DECLARE package_name_var VARCHAR(100);
-    DECLARE package_version_var VARCHAR(100);
-    DECLARE tool_name_var VARCHAR(100);
-    DECLARE tool_version_var VARCHAR(100);
-    DECLARE platform_name_var VARCHAR(100);
-    DECLARE platform_version_var VARCHAR(100);
-    DECLARE project_name_var VARCHAR(100);
-    DECLARE completion_date_var VARCHAR(45);
-    DECLARE cmd VARCHAR(2000);
-    DECLARE cmd_return_code INT;
-
-    # lkup assessment_result
-    select project_uuid, execution_record_uuid,
-           case when file_path like '%results.tar.gz%' then 'FAILURE'
-                when file_path like '%outputdisk.tar.gz%' then 'FAILURE'
-                else 'SUCCESS' end as success_or_failure,
-           package_name, package_version, tool_name, tool_version, platform_name, platform_version
-      into project_uuid_var, execution_record_uuid_var,
-           success_or_failure_var,
-           package_name_var, package_version_var, tool_name_var, tool_version_var, platform_name_var, platform_version_var
-      from assessment_result
-     where assessment_result_uuid = NEW.relevant_uuid;
-
-    # lkup project
-    select full_name
-      into project_name_var
-      from project.project
-     where project_uid = project_uuid_var;
-
-    # set completion_date
-    set completion_date_var = now();
-
-    set cmd = null;
-    set cmd = CONCAT(' /usr/local/bin/notify_user',
-                     ifnull(concat(' --notification_uuid \'', NEW.notification_uuid,'\''),''),
-                     ifnull(concat(' --transmission_medium \'', NEW.transmission_medium,'\''),''),
-                     ifnull(concat(' --user_uuid \'', NEW.user_uuid,'\''),''),
-                     ifnull(concat(' --notification_impetus \'', NEW.notification_impetus,'\''),''),
-                     ifnull(concat(' --success_or_failure \'', success_or_failure_var,'\''),''),
-                     ifnull(concat(' --project_name \'', project_name_var,'\''),''),
-                     ifnull(concat(' --package_name \'', package_name_var,'\''),''),
-                     ifnull(concat(' --package_version \'', package_version_var,'\''),''),
-                     ifnull(concat(' --tool_name \'', tool_name_var,'\''),''),
-                     ifnull(concat(' --tool_version \'', tool_version_var,'\''),''),
-                     ifnull(concat(' --platform_name \'', platform_name_var,'\''),''),
-                     ifnull(concat(' --platform_version \'', platform_version_var,'\''),''),
-                     ifnull(concat(' --completion_date \'', completion_date_var,'\''),''),
-                     '');
-
-    # Verbose Logging
-      # insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'notification_trigger');
-    set cmd_return_code = sys_exec(cmd);
-
-END;
-$$
-DELIMITER ;
 
 #CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 # kill A-Run trigger
