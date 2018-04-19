@@ -16,3 +16,4 @@ set @description = 'Parasoft\'s Jtest, a Development Testing solution for Java a
 set @tool_sharing_status = 'PUBLIC';
 set @policy_code = null;
 set @notes = '';
+set @user_add_on_flag = 1;

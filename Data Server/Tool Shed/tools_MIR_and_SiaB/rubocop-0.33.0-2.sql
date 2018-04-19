@@ -15,3 +15,4 @@ set @version_string = '0.33';
 set @notes = 'RuboCop 0.33 for Ruby';
 set @tool_path = '/swamp/store/SCATools/bundled/rubocop-0.33.0-2.tar.gz';
 set @checksum = '4ced934bbcfef8e08eef17fd4071337b073a7c00d370c3c4ed63aabeeeba2b843ee0cd0975e3b81850699c9b28575c5f5e49d20daff2356f0ed06ca4080395da';
+set @user_add_on_flag = 0;

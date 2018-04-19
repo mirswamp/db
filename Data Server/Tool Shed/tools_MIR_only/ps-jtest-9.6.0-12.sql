@@ -15,3 +15,4 @@ set @version_string = '9.6.0';
 set @notes = 'Parasoft Jtest v9.6.0';
 set @tool_path = '/swamp/store/SCATools/MIR/ps-jtest-9.6.0-12.tar';
 set @checksum = 'e9144e94b880b5631239a481cf9962480ec14cf4fa4df4910e712c8109059ed3361d4ab0fd2142697c19ed0df47fb0e10a4e6f8554eb5acf776236d11dbb57ea';
+set @user_add_on_flag = 0;

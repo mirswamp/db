@@ -99,7 +99,8 @@ CREATE PROCEDURE create_metric_run (
           tool_version_uuid,
           platform_uuid,
           platform_version_uuid,
-          package_owner_uuid)
+          package_owner_uuid,
+          launch_counter)
         values (
           metric_run_uuid_var,          # metric_run_uuid,
           package_uuid_in,              # package_uuid,
@@ -108,7 +109,8 @@ CREATE PROCEDURE create_metric_run (
           metric_tool_version_uuid_var, # tool_version_uuid,
           platform_uuid_var,            # platform_uuid,
           platform_version_uuid_var,    # platform_version_uuid
-          package_owner_uuid_var        # package_owner_uuid
+          package_owner_uuid_var,       # package_owner_uuid
+          1                             # launch_counter - it's immediately launched below
           );
 
       # Execute M-Run
@@ -315,7 +317,9 @@ DELIMITER ;
 GRANT SELECT ON metric.* TO 'web'@'%';
 
 # 'java_agent'@'%'
+GRANT SELECT, INSERT, UPDATE ON metric.* TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE metric.insert_results TO 'java_agent'@'%';
 
 # 'java_agent'@'localhost'
+GRANT SELECT, INSERT, UPDATE ON metric.* TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE metric.insert_results TO 'java_agent'@'localhost';

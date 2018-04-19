@@ -15,3 +15,4 @@ set @version_string = '1.3.5';
 set @notes = 'Dawn 1.3.5 for Ruby';
 set @tool_path = '/swamp/store/SCATools/bundled/dawnscanner-1.3.5-4.tar';
 set @checksum = '4a67a61a849239ad1cf2fa89df8595dd91684b1316eb6dfa1e706080e9330fe22b7f111f1299fcc3a466849510a50b9239bbf461efc7034dc360df977c0a1c92';
+set @user_add_on_flag = 0;

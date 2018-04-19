@@ -32,14 +32,3 @@ insert into viewer_version (viewer_version_uuid, viewer_uuid,
                     'invocation_cmd', 'sign_in_cmd', 'add_user_cmd', 'add_result_cmd',
                     'viewer_path', 'viewer_checksum',
                     'viewer_db_path', 'viewer_db_checksum');
-
-# Threadfix: Add viewer and viewer_version records
-# List as incompatible with all installed tools except clang
-insert into viewer_store.viewer (viewer_uuid, viewer_owner_uuid, name, viewer_sharing_status)
-  values ('a0e1d0fb-bfb2-11e5-bf72-001a4a814413', '80835e30-d527-11e2-8b8b-0800200c9a66', 'ThreadFix', 'PUBLIC');
-insert into viewer_store.viewer_version (viewer_version_uuid, viewer_uuid, version_string)
-            values ('b0e931d7-bfb2-11e5-bf72-001a4a814413', 'a0e1d0fb-bfb2-11e5-bf72-001a4a814413', '1');
-insert into tool_shed.tool_viewer_incompatibility (tool_uuid, viewer_uuid)
-  select tool_uuid, 'a0e1d0fb-bfb2-11e5-bf72-001a4a814413' from tool_shed.tool where tool_uuid != 'f212557c-3050-11e3-9a3e-001a4a81450b';
-
-commit;

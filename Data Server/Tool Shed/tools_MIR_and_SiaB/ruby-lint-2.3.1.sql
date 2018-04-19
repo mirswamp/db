@@ -15,3 +15,4 @@ set @version_string = '2.3.1';
 set @notes = 'ruby-lint 2.3.1 for Ruby';
 set @tool_path = '/swamp/store/SCATools/bundled/ruby-lint-2.3.1.tar';
 set @checksum = '50e2ac4c5b1a228f2147db266b22ef93a23fe4cad2fad7e12c8f6ee691f71aee8f57a847627efe49b466e711851966d16e66f4873ba4ef3615afcbb96e6c11e2';
+set @user_add_on_flag = 0;

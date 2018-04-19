@@ -15,3 +15,4 @@ set @version_string = '0.14.0';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/bandit-py3-0.14.0-6.tar.gz';
 set @checksum = '3ca493b72e3134dd5ec0614913bc811711195c8508c80567da71b6182953c54beaccee8bd6d33ade7dbe32cb4e7f29f2bb25756d96f560c60b81daecaaf3a8ae';
+set @user_add_on_flag = 0;

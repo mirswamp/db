@@ -87,44 +87,47 @@ CREATE TABLE assessment_run_request (
 
 #############################
 CREATE TABLE execution_record (
-  execution_record_id          INT  NOT NULL  AUTO_INCREMENT                COMMENT 'internal id',
-  execution_record_uuid        VARCHAR(45) NOT NULL                         COMMENT 'execution record uuid',
-  assessment_run_uuid          VARCHAR(45) NOT NULL                         COMMENT 'assessment run uuid',
-  run_request_uuid             VARCHAR(45) NOT NULL                         COMMENT 'run request uuid',
-  user_uuid                    VARCHAR(45)                                  COMMENT 'user that requested run',
-  launch_flag                  tinyint(1) NOT NULL DEFAULT 1                COMMENT 'Launch Run: 0=false 1=true',
-  launch_counter               tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Launch counter',
-  complete_flag                tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is run complete: 0=false 1=true',
-  notify_when_complete_flag    tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Notify user when run finishes: 0=false 1=true',
-  project_uuid                 VARCHAR(45) NOT NULL                         COMMENT 'projects owns',
-  platform_version_uuid        VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
-  tool_version_uuid            VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
-  package_version_uuid         VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
+  execution_record_id          INT  NOT NULL  AUTO_INCREMENT                    COMMENT 'internal id',
+  execution_record_uuid        VARCHAR(45)  NOT NULL                            COMMENT 'execution record uuid',
+  assessment_run_uuid          VARCHAR(45)  NOT NULL                            COMMENT 'assessment run uuid',
+  run_request_uuid             VARCHAR(45)  NOT NULL                            COMMENT 'run request uuid',
+  user_uuid                    VARCHAR(45)                                      COMMENT 'user that requested run',
+  launch_flag                  tinyint(1)   NOT NULL DEFAULT 1                  COMMENT 'Launch Run: 0=false 1=true',
+  launch_counter               INT(1)       UNSIGNED NOT NULL DEFAULT 0         COMMENT 'Count of launches',
+  launch_countdown             INT(1)       UNSIGNED NOT NULL DEFAULT 0         COMMENT 'Countdown to next launch',
+  submitted_to_condor_flag     tinyint(1)   NOT NULL DEFAULT 0                  COMMENT 'Submitted to Condor: 0=false 1=true',
+  complete_flag                tinyint(1)   NOT NULL DEFAULT 0                  COMMENT 'Is run complete: 0=false 1=true',
+  notify_when_complete_flag    tinyint(1)   NOT NULL DEFAULT 0                  COMMENT 'Notify user when run finishes: 0=false 1=true',
+  project_uuid                 VARCHAR(45)  NOT NULL                            COMMENT 'projects owns',
+  platform_version_uuid        VARCHAR(45)  NOT NULL                            COMMENT 'version uuid',
+  tool_version_uuid            VARCHAR(45)  NOT NULL                            COMMENT 'version uuid',
+  package_version_uuid         VARCHAR(45)  NOT NULL                            COMMENT 'version uuid',
   status                       VARCHAR(100) NOT NULL DEFAULT 'WAITING TO START' COMMENT 'status of execution record',
-  run_date                     TIMESTAMP NULL DEFAULT NULL                  COMMENT 'run begin timestamp',
-  completion_date              TIMESTAMP NULL DEFAULT NULL                  COMMENT 'run completion timestamp',
-  queued_duration              VARCHAR(12)                                  COMMENT 'string run date minus create date',
-  execution_duration           VARCHAR(12)                                  COMMENT 'string completion date minus run date',
-  execute_node_architecture_id VARCHAR(128)                                 COMMENT 'execute note id',
-  total_lines                  INT                                          COMMENT 'total LOC',
-  code_lines                   INT                                          COMMENT 'LOC minus blanks and comments',
-  cpu_utilization              VARCHAR(32)                                  COMMENT 'cpu utilization',
-  vm_hostname                  VARCHAR(100)                                 COMMENT 'vm ssh hostname',
-  vm_username                  VARCHAR(50)                                  COMMENT 'vm ssh username',
-  vm_password                  VARCHAR(50)                                  COMMENT 'vm ssh password',
-  vm_ip_address                VARCHAR(50)                                  COMMENT 'vm ip address',
-  vm_image                     VARCHAR(100)                                 COMMENT 'vm image',
-  tool_filename                VARCHAR(100)                                 COMMENT 'tool filename',
-  create_user                  VARCHAR(25)                                  COMMENT 'db user that inserted record',
-  create_date                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
-  update_user                  VARCHAR(25)                                  COMMENT 'db user that last updated record',
-  update_date                  TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
-  delete_date                  TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
+  run_date                     TIMESTAMP    NULL DEFAULT NULL                   COMMENT 'run begin timestamp',
+  completion_date              TIMESTAMP    NULL DEFAULT NULL                   COMMENT 'run completion timestamp',
+  queued_duration              VARCHAR(12)                                      COMMENT 'string run date minus create date',
+  execution_duration           VARCHAR(12)                                      COMMENT 'string completion date minus run date',
+  execute_node_architecture_id VARCHAR(128)                                     COMMENT 'execute note id',
+  total_lines                  INT                                              COMMENT 'total LOC',
+  code_lines                   INT                                              COMMENT 'LOC minus blanks and comments',
+  cpu_utilization              VARCHAR(32)                                      COMMENT 'cpu utilization',
+  vm_hostname                  VARCHAR(100)                                     COMMENT 'vm ssh hostname',
+  vm_username                  VARCHAR(50)                                      COMMENT 'vm ssh username',
+  vm_password                  VARCHAR(50)                                      COMMENT 'vm ssh password',
+  vm_ip_address                VARCHAR(50)                                      COMMENT 'vm ip address',
+  vm_image                     VARCHAR(100)                                     COMMENT 'vm image',
+  tool_filename                VARCHAR(100)                                     COMMENT 'tool filename',
+  create_user                  VARCHAR(25)                                      COMMENT 'db user that inserted record',
+  create_date                  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP  COMMENT 'date record inserted',
+  update_user                  VARCHAR(25)                                      COMMENT 'db user that last updated record',
+  update_date                  TIMESTAMP    NULL DEFAULT NULL                   COMMENT 'date record last updated',
+  delete_date                  TIMESTAMP    NULL DEFAULT NULL                   COMMENT 'date record deleted',
   PRIMARY KEY (execution_record_id),
     CONSTRAINT execution_record_uuid_uc  UNIQUE (execution_record_uuid),
     INDEX idx_execution_record_proj_uuid (project_uuid),
     INDEX idx_execution_record_user_uuid (user_uuid),
-    INDEX idx_execution_record_ar_uuid (assessment_run_uuid)
+    INDEX idx_execution_record_ar_uuid (assessment_run_uuid),
+    INDEX idx_execution_record_complete (complete_flag)
  )COMMENT='execution records';
 
 ##############################
@@ -291,6 +294,17 @@ CREATE TABLE scheduler_logging (
   create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
   );
+
+CREATE TABLE usage_stats (
+  usage_stats_id  INT NOT NULL AUTO_INCREMENT,
+  enabled_users   INT COMMENT 'enabled_flag = 1, excludes test users',
+  package_uploads INT COMMENT 'excludes curated pkgs and test users',
+  assessments     INT COMMENT 'excludes runs by test users',
+  loc             INT COMMENT 'excludes runs by test users',
+  create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (usage_stats_id)
+  );
+
 
 ###################
 ## Events

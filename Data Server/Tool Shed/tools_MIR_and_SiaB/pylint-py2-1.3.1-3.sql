@@ -15,3 +15,4 @@ set @version_string = '1.3.1';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/pylint-py2-1.3.1-3.tar.gz';
 set @checksum = 'c4faf19de7784505ea098029c596fc585ef8c7c8531b29c0c5eb3c6054b961cb8b6df3fd9e6d5348d6b6aa9fa70786b840667de8774307bf8ca34947870004cf';
+set @user_add_on_flag = 0;

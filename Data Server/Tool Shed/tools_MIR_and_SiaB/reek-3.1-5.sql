@@ -15,3 +15,4 @@ set @version_string = '3.1';
 set @notes = 'Reek 3.1 for Ruby';
 set @tool_path = '/swamp/store/SCATools/bundled/reek-3.1-5.tar';
 set @checksum = '08f1e54e5a7c2772fa323d3946c8caa90d0f3a29148aeda6f88d0532de70eaba2703a0dced97aaf6cf3ea7d7940e3132c5e5448b8e38c8bad46828111056d977';
+set @user_add_on_flag = 0;

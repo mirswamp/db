@@ -42,6 +42,7 @@ union
 CREATE OR REPLACE VIEW exec_run_view as
 select
 er.execution_record_uuid,
+er.launch_counter,
 er.project_uuid,
 er.user_uuid,
 pkg.name as package_name,
@@ -69,6 +70,7 @@ pkg_ver.use_gradle_wrapper,
 pkg_ver.language_version,
 pkg_ver.maven_version,
 pkg_ver.android_maven_plugin,
+pkg_ver.exclude_paths,
 tool.name as tool_name,
 tool_ver.version_string,
 tool_ver.tool_path,
@@ -87,10 +89,11 @@ inner join tool_shed.tool_version tool_ver on tool_ver.tool_version_uuid = er.to
 inner join tool_shed.tool on tool.tool_uuid = tool_ver.tool_uuid
 inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = er.platform_version_uuid
 left outer join package_store.package_version_dependency pvd on er.package_version_uuid = pvd.package_version_uuid and er.platform_version_uuid = pvd.platform_version_uuid
-where er.status not like 'Finished%'
+where er.complete_flag = 0
 union
 select
 mr.metric_run_uuid as execution_record_uuid,
+mr.launch_counter,
 'METRIC' as project_uuid,
 'METRIC' as user_uuid,
 pkg.name as package_name,
@@ -118,6 +121,7 @@ pkg_ver.use_gradle_wrapper,
 pkg_ver.language_version,
 pkg_ver.maven_version,
 pkg_ver.android_maven_plugin,
+pkg_ver.exclude_paths,
 mt.name as tool_name,
 mtv.version_string,
 mtv.tool_path,
@@ -134,7 +138,7 @@ inner join metric.metric_tool_version mtv on mtv.metric_tool_version_uuid = mr.t
 inner join metric.metric_tool mt on mt.metric_tool_uuid = mtv.metric_tool_uuid
 inner join platform_store.platform_version plt_ver on plt_ver.platform_version_uuid = mr.platform_version_uuid
 left outer join package_store.package_version_dependency pvd on mr.package_version_uuid = pvd.package_version_uuid and mr.platform_version_uuid = pvd.platform_version_uuid
-where mr.status not like 'Finished%'
+where mr.complete_flag = 0
 ;
 
 ####################
@@ -289,6 +293,28 @@ CREATE PROCEDURE create_execution_record (
                                  from tool_shed.tool_version
                                 where tool_uuid = tool_uuid_var);
            if tool_row_count_int > 0 then
+             # If compatible user add on version exists, then get latest user add on
+             if exists (select *
+                         from tool_shed.tool_version tv
+                        inner join tool_shed.tool_language tl on tv.tool_version_uuid = tl.tool_version_uuid
+                        where tv.tool_uuid = tool_uuid_var
+                          and tv.user_add_on_flag = 1
+                          and tl.package_type_id = (select package_type_id from package_store.package where package_uuid = package_uuid_var))
+               then
+                 select max(tool_version_uuid)
+                    into tool_version_uuid_var
+                    from tool_shed.tool_version
+                   where tool_uuid = tool_uuid_var
+                     and user_add_on_flag = 1
+                     and version_no = (select max(tv.version_no)
+                                                 from tool_shed.tool_version tv
+                                                inner join tool_shed.tool_language tl on tv.tool_version_uuid = tl.tool_version_uuid
+                                                where tv.tool_uuid = tool_uuid_var
+                                                  and tv.user_add_on_flag = 1
+                                                  and tl.package_type_id = (select package_type_id from package_store.package where package_uuid = package_uuid_var)
+                                       );
+             # Otherwise, get latest version
+             else
              select max(tool_version_uuid)
                 into tool_version_uuid_var
                 from tool_shed.tool_version
@@ -297,7 +323,9 @@ CREATE PROCEDURE create_execution_record (
                                      from tool_shed.tool_version tv
                                     inner join tool_shed.tool_language tl on tv.tool_version_uuid = tl.tool_version_uuid
                                     where tv.tool_uuid = tool_uuid_var
-                                      and tl.package_type_id = (select package_type_id from package_store.package where package_uuid = package_uuid_var));
+                                      and tl.package_type_id = (select package_type_id from package_store.package where package_uuid = package_uuid_var)
+                                   );
+             end if;
            end if;
          end;
         end if;
@@ -688,21 +716,23 @@ DELIMITER $$
 CREATE PROCEDURE process_execution_records ()
   BEGIN
     DECLARE execution_record_uuid_var VARCHAR(45);
+    DECLARE launch_flag_var INT;
+    DECLARE launch_counter_var INT;
+    DECLARE launch_countdown_var INT;
+    DECLARE launch_counter_limit INT;
     DECLARE validate_return_code VARCHAR(100);
     DECLARE exec_return_code INT;
     DECLARE end_of_loop BOOL;
-    #DECLARE counter INT;     ## log exec timing
-    #DECLARE start_time TIME; ## log exec timing
-    #DECLARE end_time TIME;   ## log exec timing
+    DECLARE launch_counter_rtn INT;
     DECLARE cur1 CURSOR FOR
     select execution_record_uuid
-      from execution_record er
-     where status = 'WAITING TO START';
+      from execution_record
+     where launch_flag = 1;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND
         SET end_of_loop = TRUE;
 
-    #set counter = 0; ## log exec timing
+    set launch_counter_limit = 15;
 
     # set flag currently_processing_execution_records
     update system_status
@@ -716,35 +746,66 @@ CREATE PROCEDURE process_execution_records ()
         LEAVE read_loop;
       END IF;
 
-      #set counter = counter + 1; ## log exec timing
-      # validate
-      call assessment.validate_execution_record(execution_record_uuid_var, validate_return_code);
+      # Get run info
+      select launch_flag, launch_counter, launch_countdown
+        into launch_flag_var, launch_counter_var, launch_countdown_var
+        from execution_record
+       where execution_record_uuid = execution_record_uuid_var;
 
-      # if valid, then execute, else set status to invalid
-      if validate_return_code = 'Y'
-        then
-          begin
-            #set start_time = now();                                  ## log exec timing
-            call assessment.execute_execution_record(execution_record_uuid_var, exec_return_code);
-            #set end_time = now();                                    ## log exec timing
-            #insert into scheduler_logging (msg) values (             ## log exec timing
-            #  concat(                                                ## log exec timing
-            #    'launch ',                                           ## log exec timing
-            #    counter,                                             ## log exec timing
-            #    ' - ',                                               ## log exec timing
-            #    ifnull(TIMEDIFF(end_time, start_time),'0')           ## log exec timing
-            #    )                                                    ## log exec timing
-            #    );                                                   ## log exec timing
-            if exec_return_code = 0
-            then
-              update execution_record set status = 'SUBMITTING TO HTCONDOR' where execution_record_uuid = execution_record_uuid_var;
-            else
-              update execution_record set status = 'FAILED TO START' where execution_record_uuid = execution_record_uuid_var;
-            end if;
-          end;
+      # If launch_flag no longer 1, then iterate
+      if launch_flag_var != 1 then
+        iterate read_loop;
+      end if;
+
+      # If launch_counter limit reached, then kill assessment and iterate
+      if launch_counter_var >= launch_counter_limit then
+        update execution_record
+           set launch_flag = 0,
+               complete_flag = 1,
+               status = 'Failed to launch'
+         where execution_record_uuid = execution_record_uuid_var;
+        iterate read_loop;
+      end if;
+
+      # If launch_countdown hasn't reached zero, then decrement and iterate
+      if launch_countdown_var > 0 then
+        update execution_record
+           set launch_countdown = launch_countdown - 1
+         where execution_record_uuid = execution_record_uuid_var;
+        iterate read_loop;
+      end if;
+
+      # validate. If invalid, then kill assessment and iterate
+      call assessment.validate_execution_record(execution_record_uuid_var, validate_return_code);
+      if ifnull(validate_return_code,'N') != 'Y' then
+        update execution_record
+           set status = validate_return_code,
+               launch_flag = 0,
+               complete_flag = 1
+         where execution_record_uuid = execution_record_uuid_var;
+        iterate read_loop;
+      end if;
+
+      # Actively re-check parameters before running
+      if (launch_flag_var = 1 and
+          launch_counter_var < launch_counter_limit and
+          launch_countdown_var = 0 and
+          validate_return_code = 'Y') then
+        # increment launch_counter & reset launch_countdown
+        call assessment.increment_launch_counter(execution_record_uuid_var, launch_counter_var, launch_counter_rtn);
+        if launch_counter_rtn != -1 then
+          call assessment.execute_execution_record(execution_record_uuid_var, exec_return_code);
+          if exec_return_code = 0 then
+            update execution_record
+               set status = 'SUBMITTING TO HTCONDOR'
+             where execution_record_uuid = execution_record_uuid_var;
+          end if;
         else
-          update execution_record set status = validate_return_code where execution_record_uuid = execution_record_uuid_var;
+          update execution_record
+             set status = 'FAILURE TO INCREMENT LAUNCH COUNTER'
+           where execution_record_uuid = execution_record_uuid_var;
         end if;
+      end if;
 
     END LOOP;
     CLOSE cur1;
@@ -1199,6 +1260,7 @@ CREATE PROCEDURE launch_viewer (
                                ifnull(concat(' --platform_version \'', platform_version_var,'\''),''),
                                ifnull(concat(' --start_date \'', start_time_var,'\''),''),
                                ifnull(concat(' --end_date \'', end_date_var,'\''),''),
+                               ifnull(concat(' --user_uuid \'', user_uuid_in,'\''),''),
                                '');
 
               # Verbose Logging
@@ -1270,15 +1332,16 @@ CREATE PROCEDURE launch_viewer (
           set cmd = CONCAT(' /usr/local/bin/launch_viewer',
                            ifnull(concat(' --viewer_name \'', viewer_name_var,'\''),''),
                            ifnull(concat(' --project \'', project_uuid_in,'\''),''),
-                           ifnull(concat(' --invocation_cmd \'', invocation_cmd_var,'\''),''),
-                           ifnull(concat(' --sign_in_cmd \'', sign_in_cmd_var,'\''),''),
-                           ifnull(concat(' --add_user_cmd \'', add_user_cmd_var,'\''),''),
-                           ifnull(concat(' --add_result_cmd \'', add_result_cmd_var,'\''),''),
-                           ifnull(concat(' --viewer_path \'', viewer_path_var,'\''),''),
-                           ifnull(concat(' --viewer_checksum \'', viewer_checksum_var,'\''),''),
+                           #ifnull(concat(' --invocation_cmd \'', invocation_cmd_var,'\''),''),
+                           #ifnull(concat(' --sign_in_cmd \'', sign_in_cmd_var,'\''),''),
+                           #ifnull(concat(' --add_user_cmd \'', add_user_cmd_var,'\''),''),
+                           #ifnull(concat(' --add_result_cmd \'', add_result_cmd_var,'\''),''),
+                           #ifnull(concat(' --viewer_path \'', viewer_path_var,'\''),''),
+                           #ifnull(concat(' --viewer_checksum \'', viewer_checksum_var,'\''),''),
                            ifnull(concat(' --viewer_db_path \'', viewer_db_path_var,'\''),''),
                            ifnull(concat(' --viewer_db_checksum \'', viewer_db_checksum_var,'\''),''),
                            ifnull(concat(' --viewer_uuid \'', viewer_instance_uuid_var,'\''),''),
+                           ifnull(concat(' --user_uuid \'', user_uuid_in,'\''),''),
                            '');
 
           # if there is one or more assessment_result_uuid's then append to cmd
@@ -1650,6 +1713,84 @@ DELIMITER ;
 
 drop PROCEDURE if exists set_system_status;
 
+drop PROCEDURE if exists increment_launch_counter;
+DELIMITER $$
+############################################
+CREATE PROCEDURE increment_launch_counter (
+    IN execution_record_uuid_in VARCHAR(45),
+    IN launch_counter_in INT(1),
+    OUT launch_counter_out  INT(1)
+  )
+  BEGIN
+    DECLARE row_count_int int;
+
+    # verify exists 1 matching record
+    select count(1)
+      into row_count_int
+      from assessment.execution_record
+     where execution_record_uuid = execution_record_uuid_in;
+
+    if row_count_int = 1 then
+      update assessment.execution_record
+         set launch_counter = launch_counter_in + 1,
+             launch_countdown = 20
+       where execution_record_uuid = execution_record_uuid_in;
+      select launch_counter
+        into launch_counter_out
+        from assessment.execution_record
+       where execution_record_uuid = execution_record_uuid_in;
+    else
+      set launch_counter_out = -1;
+    end if;
+
+END
+$$
+DELIMITER ;
+
+drop PROCEDURE if exists populate_usage_stats;
+DELIMITER $$
+############################################
+CREATE PROCEDURE populate_usage_stats ()
+  BEGIN
+    DECLARE enabled_users_var    int;
+    DECLARE package_uploads_var int;
+    DECLARE assessments_var     int;
+    DECLARE loc_var             int;
+
+    # enabled users
+    select count(1)
+      into enabled_users_var
+      from project.user_account
+     where (user_type is null or user_type != 'test')
+       #and hibernate_flag = 0
+       and enabled_flag = 1;
+
+    # Pkg uploads - excludes test users
+    select count(distinct pv.package_version_uuid)
+      into package_uploads_var
+      from package_store.package p
+     inner join package_store.package_version pv on p.package_uuid = pv.package_uuid
+     where p.package_owner_uuid != '80835e30-d527-11e2-8b8b-0800200c9a66'
+       and p.package_owner_uuid not in (select user_uid from project.user_account where user_type = 'test')
+       and pv.create_date > DATE_SUB(now(), INTERVAL 1 YEAR);
+
+    # assessments, loc - excludes test users
+    select count(1) as arun_cnt, sum(ifnull(x.max_mr_pkg_total_lines, x.er_total_lines))
+      into assessments_var, loc_var
+    from (
+    select er.execution_record_uuid, er.total_lines as er_total_lines, max(mr.pkg_total_lines) as max_mr_pkg_total_lines
+      from assessment.execution_record er
+     left outer join metric.metric_run mr on er.package_version_uuid = mr.package_version_uuid
+     where er.user_uuid not in (select user_uid from project.user_account where user_type = 'test')
+       and er.create_date > DATE_SUB(now(), INTERVAL 1 YEAR)
+    group by er.execution_record_uuid
+     ) x;
+
+    insert into assessment.usage_stats (enabled_users, package_uploads, assessments, loc) values (enabled_users_var, package_uploads_var, assessments_var, loc_var);
+END
+$$
+DELIMITER ;
+
 ###################
 ## Triggers
 
@@ -1797,8 +1938,9 @@ CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH 
     # if execution_record is being deleted and it's still running, then kill it
     if OLD.delete_date is null
        and NEW.delete_date is not null
-       and not exists (select * from assessment.assessment_result where execution_record_uuid = NEW.execution_record_uuid)
+       and NEW.complete_flag = 0
        then
+         set NEW.launch_flag = 0;
          call assessment.kill_assessment_run (NEW.execution_record_uuid, return_string);
     end if;
 
@@ -1820,11 +1962,6 @@ CREATE EVENT process_execution_records
     BEGIN
       DECLARE currently_processing_execution_records VARCHAR(1);
       DECLARE currently_processing_execution_records_update_date TIMESTAMP;
-      #DECLARE counter INT;                                        ## log exec timing
-      #DECLARE start_time TIME;                                    ## log exec timing
-      #DECLARE end_time TIME;                                      ## log exec timing
-      #set start_time = now();                                     ## log exec timing
-      #insert into scheduler_logging (msg) values ('event start'); ## log exec timing
 
       select value, update_date
         into currently_processing_execution_records, currently_processing_execution_records_update_date
@@ -1833,7 +1970,6 @@ CREATE EVENT process_execution_records
 
       if currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) < '00:05:00' then
         insert into sys_exec_cmd_log (cmd, caller) values ('Call to procedure process_execution_records skipped because procedure is currently running.', 'process_execution_records');
-        #insert into scheduler_logging (msg) values ('event skip'); ## log exec timing
       elseif currently_processing_execution_records = 'Y' and TIMEDIFF(now(),currently_processing_execution_records_update_date) > '00:05:00' then
         begin
           insert into sys_exec_cmd_log (cmd, caller) values ('process_execution_records running longer than 5 minutes.', 'process_execution_records');
@@ -1844,12 +1980,15 @@ CREATE EVENT process_execution_records
         CALL assessment.process_execution_records();
       end if;
 
-      #set end_time = now();                                                                                           ## log exec timing
-      #insert into scheduler_logging (msg) values (concat('event end - ',ifnull(TIMEDIFF(end_time, start_time),'0'))); ## log exec timing
-
 END
 $$
 DELIMITER ;
+
+drop EVENT if exists populate_usage_stats;
+CREATE EVENT populate_usage_stats
+  ON SCHEDULE EVERY 1 DAY
+  DO CALL assessment.populate_usage_stats();
+
 
 
 ###################
@@ -1870,90 +2009,18 @@ GRANT EXECUTE ON PROCEDURE assessment.download_results TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.select_execution_record TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.insert_results TO 'java_agent'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status TO 'java_agent'@'%';
+GRANT EXECUTE ON PROCEDURE assessment.increment_launch_counter TO 'java_agent'@'%';
 GRANT SELECT ON assessment.exec_run_view TO 'java_agent'@'%';
+GRANT SELECT ON assessment.database_version TO 'java_agent'@'%';
 GRANT SELECT, UPDATE ON assessment.execution_record TO 'java_agent'@'%';
 
 # 'java_agent'@'localhost'
 GRANT EXECUTE ON PROCEDURE assessment.select_execution_record TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE assessment.insert_results TO 'java_agent'@'localhost';
 GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status TO 'java_agent'@'localhost';
+GRANT EXECUTE ON PROCEDURE assessment.increment_launch_counter TO 'java_agent'@'localhost';
 GRANT SELECT ON assessment.exec_run_view TO 'java_agent'@'localhost';
+GRANT SELECT ON assessment.database_version TO 'java_agent'@'localhost';
 GRANT SELECT, UPDATE ON assessment.execution_record TO 'java_agent'@'localhost';
 
 drop PROCEDURE if exists update_execution_run_status_test;
-
-DELIMITER $$
-############################################
-CREATE PROCEDURE update_execution_run_status_test (
-    IN execution_record_uuid_in VARCHAR(45),
-    IN field_name_in VARCHAR(45),
-    IN field_value_in VARCHAR(128),
-    OUT return_string varchar(100)
-  )
-  BEGIN
-    DECLARE row_count_int int;
-
-    # Metric Runs
-    if execution_record_uuid_in like 'M-%'
-      then
-        # verify exists 1 matching metric_run
-        select count(1)
-          into row_count_int
-          from metric.metric_run
-         where metric_run_uuid = execution_record_uuid_in;
-        if row_count_int = 1 then
-          begin
-            case
-            when field_name_in = 'status'                       then update metric.metric_run set status                       = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'execute_node_architecture_id' then update metric.metric_run set execute_node_architecture_id = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'lines_of_code'                then update metric.metric_run set code_lines                   = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'cpu_utilization'              then update metric.metric_run set cpu_utilization              = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'vm_password'                  then update metric.metric_run set vm_password                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'vm_hostname'                  then update metric.metric_run set vm_hostname                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'vm_username'                  then update metric.metric_run set vm_username                  = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'vm_image'                     then update metric.metric_run set vm_image                     = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'vm_ip_address'                then update metric.metric_run set vm_ip_address                = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'tool_filename'                then update metric.metric_run set tool_filename                = field_value_in where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'run_date'                     then update metric.metric_run set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where metric_run_uuid = execution_record_uuid_in;
-            when field_name_in = 'completion_date'              then update metric.metric_run set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where metric_run_uuid = execution_record_uuid_in;
-            end case;
-            set return_string = 'SUCCESS';
-          end;
-        else
-          set return_string = 'ERROR: Record Not Found';
-        end if;
-    # Assessment Runs
-    else
-      # verify exists 1 matching execution_record
-      select count(1)
-        into row_count_int
-        from assessment.execution_record
-       where execution_record_uuid = execution_record_uuid_in;
-      if row_count_int = 1 then
-        case
-        when field_name_in = 'status'                       then update assessment.execution_record set status                       = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'execute_node_architecture_id' then update assessment.execution_record set execute_node_architecture_id = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'lines_of_code'                then update assessment.execution_record set code_lines                   = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'cpu_utilization'              then update assessment.execution_record set cpu_utilization              = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'vm_password'                  then update assessment.execution_record set vm_password                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'vm_hostname'                  then update assessment.execution_record set vm_hostname                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'vm_username'                  then update assessment.execution_record set vm_username                  = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'vm_image'                     then update assessment.execution_record set vm_image                     = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'vm_ip_address'                then update assessment.execution_record set vm_ip_address                = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'tool_filename'                then update assessment.execution_record set tool_filename                = field_value_in where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'run_date'                     then update assessment.execution_record set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where execution_record_uuid = execution_record_uuid_in;
-        when field_name_in = 'completion_date'              then update assessment.execution_record set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where execution_record_uuid = execution_record_uuid_in;
-        end case;
-        update assessment.execution_record set vm_password = null where status like 'Finished%' and execution_record_uuid = execution_record_uuid_in;
-        set return_string = 'SUCCESS';
-      else
-        set return_string = 'ERROR: Record Not Found';
-      end if;
-    end if;
-
-END
-$$
-DELIMITER ;
-
-GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status_test TO 'java_agent'@'%';
-GRANT EXECUTE ON PROCEDURE assessment.update_execution_run_status_test TO 'java_agent'@'localhost';

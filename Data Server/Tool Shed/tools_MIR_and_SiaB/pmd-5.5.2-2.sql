@@ -15,3 +15,4 @@ set @version_string = '5.5.2';
 set @notes = 'PMD v5.5.2';
 set @tool_path = '/swamp/store/SCATools/bundled/pmd-5.5.2-2.tar.gz';
 set @checksum = 'e9645fd4bd19eb6cb912f04caa67099cf14dba7a4097fa7f55db42824d21106475b5e64cc0fceb2be0e8a3999541996b5223a65ed7b5bb86722d7625d9894431';
+set @user_add_on_flag = 0;

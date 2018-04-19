@@ -15,3 +15,4 @@ set @version_string = '2.4.1';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/flake8-py2-2.4.1-4.tar.gz';
 set @checksum = '3ec3663037c8eda55ec162eae3604a6819ce7f02c44a0370d1572e5c53bcc50b128b7dee714849c3a2d65aa549fb3bc25cd20fd7bab907cb6284ef8f479a4b3e';
+set @user_add_on_flag = 0;

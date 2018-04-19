@@ -15,3 +15,4 @@ set @version_string = '2.9.4';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/xmllint-2.9.4-3.tar.gz';
 set @checksum = 'c27affa08fafa16d7afcf0be1752df6354360fa7a25a6644e63db92b6a8fd52ee74ea7110848323e3cdf514a210cb943fc2f2ea05c695d9eb1f668c220270a1f';
+set @user_add_on_flag = 0;

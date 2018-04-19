@@ -15,3 +15,4 @@ set @version_string = '3.0.1';
 set @notes = 'Findbugs 3.0.1 (with FindSecurityBugs-1.4.5 plugin)';
 set @tool_path = '/swamp/store/SCATools/bundled/findbugs-3.0.1-3.tar.gz';
 set @checksum = '9c0c2737abfebb94e6363b0132f02c4a77243f164d9c1858ee3651b49da851608ed585c1cb2b5266350496ca4c780a16ab31f0f0af00ca7625a9e7d31ec6ffca';
+set @user_add_on_flag = 0;

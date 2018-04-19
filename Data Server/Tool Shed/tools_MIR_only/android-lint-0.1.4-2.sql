@@ -15,3 +15,4 @@ set @version_string = '0.1.4';
 set @notes = 'Android Lint 0.1.4';
 set @tool_path = '/swamp/store/SCATools/MIR/android-lint-0.1.4-2.tar.gz';
 set @checksum = '2c0fe4bfb26dd0d024f4e3107ad9b00d7a9d0aad8d03a82838504228b0c68112d79f8e01d079a382028116c415e41dad840e6d40cff653a8708ea38f3606be74';
+set @user_add_on_flag = 0;

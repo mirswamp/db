@@ -15,3 +15,4 @@ set @version_string = 'current';
 set @notes = 'GCC';
 set @tool_path = '/swamp/store/SCATools/bundled/gcc-warn-0.9.tar.gz';
 set @checksum = 'd97c43bd44ca4ec9c58e7fba2baff0536261d633ad6d53f09f84aa4427cc5fae4f1d350c0de681b24d85f470c86b26dd812db0c41e9795729f1296cfae558d4d';
+set @user_add_on_flag = 0;

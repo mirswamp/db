@@ -60,6 +60,7 @@ CREATE TABLE package_version (
   maven_version          VARCHAR(25) NULL DEFAULT NULL       COMMENT 'maven-version',
   android_maven_plugin   VARCHAR(255) NULL DEFAULT NULL      COMMENT 'android-maven-plugin',
   checkout_argument      VARCHAR(100) NULL DEFAULT NULL      COMMENT 'git checkout argument',
+  exclude_paths          VARCHAR(2000) NULL DEFAULT NULL     COMMENT 'exclude paths',
   create_user            VARCHAR(25)                         COMMENT 'user that inserted record',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user            VARCHAR(25)                         COMMENT 'user that last updated record',

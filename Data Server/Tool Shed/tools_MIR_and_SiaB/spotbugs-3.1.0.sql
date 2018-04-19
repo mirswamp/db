@@ -15,6 +15,7 @@ set @version_string = '3.1.0';
 set @notes = 'Spotbugs v3.1.0';
 set @tool_path = '/swamp/store/SCATools/bundled/spotbugs-3.1.0.tar.gz';
 set @checksum = 'fb8df9d4d21e48a808dd4716c7491d0f4f9a07fa2fec46b96ef17adbe521b337c9d9368ce9c42839b64103565f25de99043f8e125b7bdcc1bbf9ab3c6d5fba82';
+set @user_add_on_flag = 0;
 
 # set findbugs to not run when user runs all tools
 update tool_shed.tool set exclude_when_user_selects_all = 1 where tool_uuid = '163d56a7-156e-11e3-a239-001a4a81450b';

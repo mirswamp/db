@@ -16,3 +16,4 @@ set @description = 'Parasoft\'s C/C++test, a Development Testing solution for C 
 set @tool_sharing_status = 'PUBLIC';
 set @policy_code = null;
 set @notes = '';
+set @user_add_on_flag = 1;

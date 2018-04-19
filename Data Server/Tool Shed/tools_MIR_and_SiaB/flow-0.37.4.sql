@@ -15,3 +15,4 @@ set @version_string = '0.37.4';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/flow-0.37.4.tar.gz';
 set @checksum = 'a25ab9c67d0e2e206e07931988cce380005e605470dc0df5a93ebfd19816525af257aae7006f730ac414fe95f6164c314df2bb476980d6187f87283cf2af6506';
+set @user_add_on_flag = 0;

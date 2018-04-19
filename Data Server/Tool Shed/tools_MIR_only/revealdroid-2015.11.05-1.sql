@@ -15,3 +15,4 @@ set @version_string = '2015.11.05';
 set @notes = 'RevealDroid 2015.11.05';
 set @tool_path = '/swamp/store/SCATools/MIR/revealdroid-2015.11.05-1.tar';
 set @checksum = '3af46c51c3e2d728d47567ee835ab07fa3457f1f12be76f96e01b4c2041ae80cc804e472933990a05932e3410e1e4177db73ea59caea0f05de3f2b410f30b403';
+set @user_add_on_flag = 0;

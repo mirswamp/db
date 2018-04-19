@@ -330,3 +330,34 @@ CREATE TABLE app_passwords (
   update_date       TIMESTAMP    NULL DEFAULT NULL                  COMMENT 'update date',
   PRIMARY KEY (app_password_id)
 ) COMMENT='application passwords';
+
+CREATE TABLE class (
+  class_uuid                 VARCHAR(45) NOT NULL                         COMMENT 'uuid',
+  class_code                 VARCHAR(45) NOT NULL                         COMMENT 'class id',
+  description                VARCHAR(500)                                 COMMENT 'description',
+  start_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'class start date',
+  end_date                   TIMESTAMP NULL DEFAULT NULL                  COMMENT 'class end date',
+  commercial_tool_access     tinyint(1) NOT NULL DEFAULT 0                COMMENT '0=false 1=true',
+  create_user                VARCHAR(25)                                  COMMENT 'db user that inserted record',
+  create_date                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+  update_user                VARCHAR(25)                                  COMMENT 'db user that last updated record',
+  update_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
+  PRIMARY KEY (class_uuid),
+  CONSTRAINT class_code_unique UNIQUE (class_code)
+ ) COMMENT='class';
+
+CREATE TABLE class_user (
+  class_user_uuid            VARCHAR(45) NOT NULL                         COMMENT 'uuid',
+  class_code                 VARCHAR(45) NOT NULL                         COMMENT 'class id',
+  user_uid                   VARCHAR(45)                                  COMMENT 'user uuid',
+  admin_flag                 tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is user a class admin: 0=false 1=true',
+  create_user                VARCHAR(25)                                  COMMENT 'db user that inserted record',
+  create_date                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+  update_user                VARCHAR(25)                                  COMMENT 'db user that last updated record',
+  update_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  delete_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
+  PRIMARY KEY (class_user_uuid)
+  #,CONSTRAINT class_user_unique UNIQUE (class_code, user_uid)
+ ) COMMENT='class-user cross reference';
+

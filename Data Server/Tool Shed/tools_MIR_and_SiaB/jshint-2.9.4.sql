@@ -15,3 +15,4 @@ set @version_string = '2.9.4';
 set @notes = '';
 set @tool_path = '/swamp/store/SCATools/bundled/jshint-2.9.4.tar.gz';
 set @checksum = '648f1ce802b4738e4d3d16a6a67e5bef525cd1b8b2a23bb67ca0c33c6256b428004ab5d43ae1553740f71d9740983455a6711cc4cc36cfb1d2535ba9845511be';
+set @user_add_on_flag = 0;

@@ -15,3 +15,4 @@ set @version_string = '9.6.1.91';
 set @notes = 'Parasoft C/C++test v9.6.1.91';
 set @tool_path = '/swamp/store/SCATools/MIR/ps-ctest-9.6.1.91-2.tar';
 set @checksum = '3f9c1fe0df4a5c60b159de66fe41d2a2e786bbb10dfcc3300740ea7f3c263cc7038af63eabccebbfab36c1d281035648a771607f36a3989e62f84281e9e84241';
+set @user_add_on_flag = 0;

@@ -15,3 +15,4 @@ set @version_string = '7.4';
 set @notes = 'Checkstyle v7.4';
 set @tool_path = '/swamp/store/SCATools/bundled/checkstyle-7.4.tar.gz';
 set @checksum = 'dc2601eff015f378f9e9841cfc4b082dd5efdeb6d8de3be5d36a65d717f1d4a9fd14bcde796d97dcd492f4786665535600c1418fc657cadf557d6a9aae8b14a8';
+set @user_add_on_flag = 0;

@@ -15,3 +15,4 @@ set @version_string = '3.05';
 set @notes = 'Brakeman 3.05 for Ruby';
 set @tool_path = '/swamp/store/SCATools/bundled/brakeman-3.0.5-2.tar.gz';
 set @checksum = '778bd9ed4d3c4cdc875b6e464a2473ad617e14e8c734bad3280d7b8e1686b448d94e2a23158ddde535e3bcc44279ad1c949c44f9f9c74fab93ab5770d3fce058';
+set @user_add_on_flag = 0;

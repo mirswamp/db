@@ -21,6 +21,15 @@ CREATE PROCEDURE upgrade_56 ()
     if cur_db_version_no < script_version_no then
       begin
 
+        # system_type
+        if not exists (select * from assessment.system_setting where system_setting_code = 'SYSTEM_TYPE') then
+            insert into assessment.system_setting (system_setting_code, system_setting_value) values ('SYSTEM_TYPE', 'SWAMP_IN_A_BOX');
+        end if;
+        select system_setting_value
+          into system_type
+          from assessment.system_setting
+         where system_setting_code = 'SYSTEM_TYPE';
+
         # Add column to table
         if exists (select * from information_schema.columns
                     where table_schema = 'tool_shed'
@@ -136,6 +145,13 @@ CREATE PROCEDURE upgrade_56 ()
         update assessment.assessment_result ar
            set ar.tool_uuid = (select tv.tool_uuid from tool_shed.tool_version tv where tv.tool_version_uuid = ar.tool_version_uuid)
          where ar.tool_uuid is null;
+
+        if (system_type = 'MIR_SWAMP') then
+          # Remove Threadfix
+          delete from tool_shed.tool_viewer_incompatibility where viewer_uuid = 'a0e1d0fb-bfb2-11e5-bf72-001a4a814413';
+          delete from viewer_store.viewer_version           where viewer_uuid = 'a0e1d0fb-bfb2-11e5-bf72-001a4a814413';
+          delete from viewer_store.viewer                   where viewer_uuid = 'a0e1d0fb-bfb2-11e5-bf72-001a4a814413';
+        end if;
 
         # update database version number
         delete from assessment.database_version where database_version_no = script_version_no;

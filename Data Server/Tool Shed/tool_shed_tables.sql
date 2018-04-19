@@ -27,6 +27,7 @@ CREATE TABLE tool (
 CREATE TABLE tool_version (
   tool_version_uuid      VARCHAR(45) NOT NULL                COMMENT 'version uuid',
   tool_uuid              VARCHAR(45) NOT NULL                COMMENT 'each version belongs to a tool; links to tool',
+  user_add_on_flag       tinyint(1) NOT NULL DEFAULT 0       COMMENT 'Was tool added by user: 0=false 1=true',
   version_no             INT                                 COMMENT 'incremental integer version number',
   version_string         VARCHAR(100)                        COMMENT 'eg version 5.0 stable release for Windows 7 64-bit',
   release_date           TIMESTAMP NULL DEFAULT NULL         COMMENT 'date version is released',

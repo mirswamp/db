@@ -15,3 +15,4 @@ set @version_string = '2.0.21';
 set @notes = 'error-prone v2.0.21';
 set @tool_path = '/swamp/store/SCATools/bundled/error-prone-2.0.21.tar.gz';
 set @checksum = '52dfad50393f6db3c55eea9c05d478aa31f05e698fdde2adbad5135b54a06b9ccf82b14a4560b9edf964a0a91e314d2e8dd3c0c593a7c54fcbc00bc91a4bd418';
+set @user_add_on_flag = 0;

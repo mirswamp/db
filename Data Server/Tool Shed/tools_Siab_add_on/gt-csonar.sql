@@ -16,3 +16,4 @@ set @description = 'GrammaTech\'s flagship static analysis SAST tool. <a href="h
 set @tool_sharing_status = 'PUBLIC';
 set @policy_code = null;
 set @notes = '';
+set @user_add_on_flag = 1;
