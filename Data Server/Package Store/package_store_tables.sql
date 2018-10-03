@@ -36,7 +36,7 @@ CREATE TABLE package_version (
   version_string         VARCHAR(100) NOT NULL  DEFAULT ''   COMMENT 'eg version 5.0 stable release for Windows 7 64-bit',
   release_date           TIMESTAMP NULL DEFAULT NULL         COMMENT 'date version is released',
   retire_date            TIMESTAMP NULL DEFAULT NULL         COMMENT 'date version is retired',
-  notes                  VARCHAR(200)                        COMMENT 'Comment visible to users.',
+  notes                  VARCHAR(1000)                       COMMENT 'Comment visible to users.',
   package_path           VARCHAR(200)                        COMMENT 'cannonical path of package',
   checksum               VARCHAR(200)                        COMMENT 'checksum of package',
   source_path            VARCHAR(1000)                        COMMENT 'location of source in package',

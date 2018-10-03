@@ -147,6 +147,7 @@ CREATE PROCEDURE insert_results (
     IN log_checksum_in VARCHAR(200),
     IN weakness_cnt_in INT,
     IN status_out_in VARCHAR(3000),
+    IN status_out_error_msg_in VARCHAR(200),
     OUT return_string varchar(100)
   )
   BEGIN
@@ -214,7 +215,8 @@ CREATE PROCEDURE insert_results (
              set file_host = 'SWAMP',
                  result_path = concat(result_dest_path,result_filename),
                  result_checksum = result_checksum_in,
-                 status_out = status_out_in
+                 status_out = status_out_in,
+                 status_out_error_msg = status_out_error_msg_in
                  #,log_path = concat(result_dest_path,log_filename),
                  #log_checksum = log_checksum_in
             where metric_run_uuid = metric_run_uuid_in;

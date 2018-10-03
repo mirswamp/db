@@ -46,6 +46,7 @@ er.launch_counter,
 er.project_uuid,
 er.user_uuid,
 pkg.name as package_name,
+pkg_ver.version_string as package_version,
 pkg.package_language,
 pkg_type.name as package_type,
 pkg_ver.package_path,
@@ -97,6 +98,7 @@ mr.launch_counter,
 'METRIC' as project_uuid,
 'METRIC' as user_uuid,
 pkg.name as package_name,
+pkg_ver.version_string as package_version,
 pkg.package_language,
 pkg_type.name as package_type,
 pkg_ver.package_path,
@@ -423,7 +425,7 @@ CREATE PROCEDURE validate_execution_record (
     IN execution_record_uuid_in VARCHAR(45),
     OUT return_code VARCHAR(100)
   )
-  BEGIN
+  sp_label:BEGIN
     DECLARE project_uuid_var          VARCHAR(45);
     DECLARE platform_version_uuid_var VARCHAR(45);
     DECLARE tool_version_uuid_var     VARCHAR(45);
@@ -437,6 +439,14 @@ CREATE PROCEDURE validate_execution_record (
     DECLARE parasoft_ok  CHAR(1);
     DECLARE grammatech_ok  CHAR(1);
     DECLARE coverity_ok  CHAR(1);
+
+    DECLARE tool_uuid_var           VARCHAR(45);
+    DECLARE tool_sharing_status_var VARCHAR(25);
+    DECLARE policy_code_var         VARCHAR(100);
+    DECLARE permission_code_var     VARCHAR(100);
+    DECLARE grant_date_var      DATETIME;
+    DECLARE delete_date_var     DATETIME;
+    DECLARE expiration_date_var DATETIME;
 
     # get info from execution_record
     select project_uuid, platform_version_uuid, tool_version_uuid, package_version_uuid, user_uuid
@@ -473,19 +483,51 @@ CREATE PROCEDURE validate_execution_record (
             )
            );
 
-    # verify tool is public or shared with project
-    select 'Y'
-      into tool_ok
-      from tool_shed.tool_version pv
-     inner join tool_shed.tool p on p.tool_uuid = pv.tool_uuid
-     where pv.tool_version_uuid = tool_version_uuid_var
-       and (upper(p.tool_sharing_status) = 'PUBLIC'
-            or
-            (upper(p.tool_sharing_status) = 'PROTECTED'
-             and exists (select 1 from tool_shed.tool_sharing ps
-                          where ps.tool_uuid = p.tool_uuid and ps.project_uuid = project_uuid_var)
-            )
-           );
+    # verify tool
+    select t.tool_uuid, t.tool_sharing_status, pol.policy_code, per.permission_code
+      into tool_uuid_var, tool_sharing_status_var, policy_code_var, permission_code_var
+      from tool_shed.tool_version tv
+     inner join tool_shed.tool t on t.tool_uuid = tv.tool_uuid
+     left outer join project.policy pol on t.policy_code = pol.policy_code
+     left outer join project.permission per on t.policy_code = per.policy_code
+     where tv.tool_version_uuid = tool_version_uuid_var;
+
+    # Verify tool sharing status: Public, Protected, Private
+      # If PROTECTED then verify tool is shared with project
+      # Any other status than 'PUBLIC' is considered 'PRIVATE'
+    if upper(tool_sharing_status_var) = 'PROTECTED'
+       and not exists (select *
+                         from tool_shed.tool_sharing ts
+                        where tool_uuid = tool_uuid_var
+                          and project_uuid = project_uuid_var)
+      then
+      set return_code = 'Error: tool not shared with project';
+      leave sp_label;
+    elseif upper(tool_sharing_status_var) != 'PUBLIC' then
+      set return_code = 'Error: tool is private';
+      leave sp_label;
+    end if;
+
+    # If tool has a policy, verify user agreed to it.
+    if policy_code_var is not null
+       and not exists (select * from project.user_policy up where up.policy_code = policy_code_var and up.user_uid = user_uuid_var and up.accept_flag = 1)
+      then
+      set return_code = 'Error: user has not agreed to tool policy';
+      leave sp_label;
+    end if;
+
+    # If tool has a permission, verify user has permission
+    if permission_code_var is not null then
+      select grant_date, delete_date, expiration_date
+        into grant_date_var, delete_date_var, expiration_date_var
+        from project.user_permission
+       where permission_code = permission_code_var
+         and user_uid = user_uuid_var;
+      if grant_date_var is null then set return_code = 'Error: need permission to use this tool'; leave sp_label;
+      elseif delete_date_var is not null then set return_code = 'Error: permission to use this tool has been revoked'; leave sp_label;
+      elseif (expiration_date_var is null or expiration_date_var < now()) then set return_code = 'Error: permission to use this tool has expired'; leave sp_label;
+      end if;
+    end if;
 
     # verify package
       # package is public or shared with project
@@ -502,73 +544,12 @@ CREATE PROCEDURE validate_execution_record (
                )
            );
 
-    # if tool is Parasoft, verify user has permission and signed EULA
-    if tool_version_uuid_var in ('0b384dc1-6441-11e4-a282-001a4a81450b','53fc0641-e094-11e5-ae56-001a4a81450b','92e94ec4-bf07-11e5-832a-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b','93334c42-e099-11e5-ae56-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b') then
-      select 'Y'
-        into parasoft_ok
-        from project.user_permission up
-       inner join project.user_policy upp on upp.user_uid = up.user_uid
-       where up.user_uid = user_uuid_var
-         and (
-              (tool_version_uuid_var    in ('0b384dc1-6441-11e4-a282-001a4a81450b','53fc0641-e094-11e5-ae56-001a4a81450b','92e94ec4-bf07-11e5-832a-001a4a81450b')
-                 and up.permission_code = 'parasoft-user-c-test'
-                 and upp.policy_code    = 'parasoft-user-c-test-policy') or
-              (tool_version_uuid_var    in ('18532f08-6441-11e4-a282-001a4a81450b','93334c42-e099-11e5-ae56-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b')
-                 and up.permission_code = 'parasoft-user-j-test'
-                 and upp.policy_code    = 'parasoft-user-j-test-policy')
-             )
-         and up.grant_date is not null  #granted
-         and up.delete_date is null     #not revoked
-         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
-         ;
-    else
-      set parasoft_ok = 'Y';
-    end if;
-
-    # if tool is GrammaTech CodeSonar, verify user has permission and signed EULA
-    if tool_version_uuid_var in ('68f4a0c7-72b2-11e5-865f-001a4a81450b') then
-      select 'Y'
-        into grammatech_ok
-        from project.user_permission up
-       inner join project.user_policy upp on upp.user_uid = up.user_uid
-       where up.user_uid = user_uuid_var
-         and up.permission_code = 'codesonar-user'
-         and upp.policy_code    = 'codesonar-user-policy'
-         and up.grant_date is not null  #granted
-         and up.delete_date is null     #not revoked
-         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
-         ;
-    else
-      set grammatech_ok = 'Y';
-    end if;
-
-    # if tool is Coverity, verify user has permission and signed EULA
-    if tool_version_uuid_var in ('f9c00dd6-82a4-11e7-9baa-001a4a81450b') then
-      select 'Y'
-        into coverity_ok
-        from project.user_permission up
-       inner join project.user_policy upp on upp.user_uid = up.user_uid
-       where up.user_uid = user_uuid_var
-         and up.permission_code = 'coverity-user'
-         and upp.policy_code    = 'coverity-user-policy'
-         and up.grant_date is not null  #granted
-         and up.delete_date is null     #not revoked
-         and (up.expiration_date is null or up.expiration_date > now()) #hasn't expired
-         ;
-    else
-      set coverity_ok = 'Y';
-    end if;
-
-    if (user_ok = 'Y' and project_ok = 'Y' and platform_ok = 'Y' and tool_ok = 'Y' and package_ok = 'Y' and parasoft_ok = 'Y' and grammatech_ok = 'Y')
+    if (user_ok = 'Y' and project_ok = 'Y' and platform_ok = 'Y' and package_ok = 'Y')
       then set return_code = 'Y';
     elseif user_ok       is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: USER ACCT DISABLED';
     elseif project_ok    is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PROJECT DISABLED';
     elseif platform_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PLATFORM NOT AVAILABLE';
-    elseif tool_ok       is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: TOOL NOT AVAILABLE';
     elseif package_ok    is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PACKAGE NOT AVAILABLE';
-    elseif parasoft_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: PARASOFT NOT AVAILABLE';
-    elseif grammatech_ok is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: CODESONAR NOT AVAILABLE';
-    elseif coverity_ok   is null then set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA: COVERITY NOT AVAILABLE';
     else                             set return_code = 'FAILED TO VALIDATE ASSESSMENT DATA';
     end if;
 
@@ -834,6 +815,7 @@ CREATE PROCEDURE insert_results (
     IN weakness_cnt_in INT,
     IN lines_of_code_in INT,
     IN status_out_in VARCHAR(3000),
+    IN status_out_error_msg_in VARCHAR(200),
     OUT return_string varchar(100)
   )
   BEGIN
@@ -869,6 +851,10 @@ CREATE PROCEDURE insert_results (
     DECLARE result_incoming_dir VARCHAR(200);
     DECLARE rmdir_return_code INT;
     DECLARE notify_return_code INT;
+    DECLARE run_date_var TIMESTAMP;
+    DECLARE execute_node_architecture_id_var VARCHAR(128);
+    DECLARE vm_hostname_var VARCHAR(100);
+    DECLARE vm_ip_address_var VARCHAR(50);
 
     if execution_record_uuid_in like 'M-%'
       then
@@ -881,6 +867,7 @@ CREATE PROCEDURE insert_results (
                                     log_checksum_in,
                                     weakness_cnt_in,
                                     status_out_in,
+                                    status_out_error_msg_in,
                                     metric_return_string);
         set return_string = metric_return_string;
     else
@@ -904,8 +891,10 @@ CREATE PROCEDURE insert_results (
     if row_count_int = 1 then
       BEGIN
         # lookup execution record details
-        select project_uuid, platform_version_uuid, tool_version_uuid, package_version_uuid, notify_when_complete_flag, user_uuid
-          into project_uuid_var, platform_version_uuid_var, tool_version_uuid_var, package_version_uuid_var, notify_when_complete_flag_var, user_uuid_var
+        select project_uuid, platform_version_uuid, tool_version_uuid, package_version_uuid, notify_when_complete_flag, user_uuid,
+               run_date, execute_node_architecture_id, vm_hostname, vm_ip_address
+          into project_uuid_var, platform_version_uuid_var, tool_version_uuid_var, package_version_uuid_var, notify_when_complete_flag_var, user_uuid_var,
+               run_date_var, execute_node_architecture_id_var, vm_hostname_var, vm_ip_address_var
           from assessment.execution_record
          where execution_record_uuid = execution_record_uuid_in;
 
@@ -985,9 +974,10 @@ CREATE PROCEDURE insert_results (
 
             insert into assessment_result (
               assessment_result_uuid, execution_record_uuid, project_uuid, weakness_cnt,
-              file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out,
+              file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out, status_out_error_msg,
               platform_name, platform_version, tool_name, tool_version, package_name, package_version,
-              platform_version_uuid, tool_version_uuid, package_version_uuid)
+              platform_version_uuid, tool_version_uuid, package_version_uuid,
+              run_date, execute_node_architecture_id, vm_hostname, vm_ip_address)
             values (
               assessment_result_uuid,      # assessment_result_uuid,
               execution_record_uuid_in,    # execution_record_uuid,
@@ -1001,6 +991,7 @@ CREATE PROCEDURE insert_results (
               concat(log_dest_path,log_filename),    # log_path
               log_checksum_in,             # log_checksum
               status_out_in,               # status_out
+              status_out_error_msg_in,     # status_out_error_msg
               platform_name_var,           # platform_name,
               platform_version_var,        # platform_version,
               tool_name_var,               # tool_name,
@@ -1009,7 +1000,8 @@ CREATE PROCEDURE insert_results (
               package_version_var,         # package_version,
               platform_version_uuid_var,   # platform_version_uuid,
               tool_version_uuid_var,       # tool_version_uuid,
-              package_version_uuid_var     # package_version_uuid
+              package_version_uuid_var,     # package_version_uuid
+              run_date_var, execute_node_architecture_id_var, vm_hostname_var, vm_ip_address_var
               );
 
             # Notify user
@@ -1073,6 +1065,8 @@ CREATE PROCEDURE update_execution_run_status (
             when field_name_in = 'tool_filename'                then update metric.metric_run set tool_filename                = field_value_in where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'run_date'                     then update metric.metric_run set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where metric_run_uuid = execution_record_uuid_in;
             when field_name_in = 'completion_date'              then update metric.metric_run set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'slot_size_start'              then update metric.metric_run set slot_size_start              = field_value_in where metric_run_uuid = execution_record_uuid_in;
+            when field_name_in = 'slot_size_end'                then update metric.metric_run set slot_size_end                = field_value_in where metric_run_uuid = execution_record_uuid_in;
             end case;
             set return_string = 'SUCCESS';
           end;
@@ -1100,6 +1094,8 @@ CREATE PROCEDURE update_execution_run_status (
         when field_name_in = 'tool_filename'                then update assessment.execution_record set tool_filename                = field_value_in where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'run_date'                     then update assessment.execution_record set run_date                     = field_value_in, queued_duration = timediff(field_value_in, create_date) where execution_record_uuid = execution_record_uuid_in;
         when field_name_in = 'completion_date'              then update assessment.execution_record set completion_date              = field_value_in, execution_duration = timediff(field_value_in, run_date) where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'slot_size_start'              then update assessment.execution_record set slot_size_start              = field_value_in where execution_record_uuid = execution_record_uuid_in;
+        when field_name_in = 'slot_size_end'                then update assessment.execution_record set slot_size_end                = field_value_in where execution_record_uuid = execution_record_uuid_in;
         end case;
         update assessment.execution_record set vm_password = null where status like 'Finished%' and execution_record_uuid = execution_record_uuid_in;
         set return_string = 'SUCCESS';
@@ -2000,6 +1996,7 @@ GRANT DELETE ON assessment.assessment_run TO 'web'@'%';
 GRANT DELETE ON assessment.run_request TO 'web'@'%';
 GRANT DELETE ON assessment.run_request_schedule TO 'web'@'%';
 GRANT DELETE ON assessment.group_list TO 'web'@'%';
+GRANT DELETE ON assessment.execution_record     TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.launch_viewer TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.kill_assessment_run TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.select_system_setting TO 'web'@'%';
@@ -2022,5 +2019,3 @@ GRANT EXECUTE ON PROCEDURE assessment.increment_launch_counter TO 'java_agent'@'
 GRANT SELECT ON assessment.exec_run_view TO 'java_agent'@'localhost';
 GRANT SELECT ON assessment.database_version TO 'java_agent'@'localhost';
 GRANT SELECT, UPDATE ON assessment.execution_record TO 'java_agent'@'localhost';
-
-drop PROCEDURE if exists update_execution_run_status_test;
