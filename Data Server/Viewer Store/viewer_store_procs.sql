@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use viewer_store;
 
@@ -137,19 +137,12 @@ CREATE PROCEDURE store_viewer (
     IN viewer_instance_uuid_in VARCHAR(45),
     IN viewer_db_path_in VARCHAR(200),
     IN viewer_db_checksum_in VARCHAR(200),
+    IN platform_image_in VARCHAR(100),
+    IN code_dx_version_in VARCHAR(100),
     OUT return_string varchar(100)
   )
   BEGIN
     DECLARE row_count_int int;
-    DECLARE project_uuid_var VARCHAR(45);
-    DECLARE viewer_db_filename VARCHAR(200);
-    DECLARE dest_path VARCHAR(200);
-    DECLARE dest_full_path VARCHAR(200);
-    DECLARE mkdir_return_code INT;
-    DECLARE mv_return_code INT;
-    DECLARE chmod_return_code INT;
-    DECLARE rm_return_code INT;
-    DECLARE cmd VARCHAR(500);
 
     # verify exists 1 matching viewer_instance
     select count(1)
@@ -158,55 +151,13 @@ CREATE PROCEDURE store_viewer (
      where viewer_instance_uuid = viewer_instance_uuid_in;
 
     if row_count_int = 1 then
-      BEGIN
-        # fetch viewer instance info
-        select project_uuid
-          into project_uuid_var
-          from viewer_store.viewer_instance
-         where viewer_instance_uuid = viewer_instance_uuid_in;
-
-        # Set filenames and paths
-        set viewer_db_filename = substring_index(viewer_db_path_in,'/',-1);
-        set dest_full_path = concat('/swamp/SCAProjects/',project_uuid_var,'/V-Runs/',viewer_instance_uuid_in,'/',viewer_db_filename);
-        set dest_path = concat('/swamp/SCAProjects/',project_uuid_var,'/V-Runs/',viewer_instance_uuid_in,'/');
-
-        # mkdir for viewer_instance
-        set cmd = null;
-        set cmd = CONCAT('mkdir -p ', dest_path);
-        set mkdir_return_code = sys_exec(cmd);
-
-        # move viewer_db file
-        set cmd = null;
-        set cmd = CONCAT('cp -f ', viewer_db_path_in, ' ', dest_full_path);
-        set mv_return_code = sys_exec(cmd);
-
-        # set permissions
-        set cmd = null;
-        set cmd = CONCAT('chmod 444 ', dest_full_path);
-        set chmod_return_code = sys_exec(cmd);
-
-
-        # Confirm file moves, then update record and return success.
-        if mkdir_return_code     != 0 then set return_string = 'ERROR CREATING DIR';
-        elseif mv_return_code    != 0 then set return_string = 'ERROR MOVING VIEWER DB';
-        elseif chmod_return_code != 0 then set return_string = 'ERROR CHMOD VIEWER DB';
-        else begin
-            # delete incoming viewer_db file - not required for SUCCESS
-            set cmd = null;
-            set cmd = CONCAT('rm -rf ', viewer_db_path_in);
-            set rm_return_code = sys_exec(cmd);
-            #insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'store_viewer: remove incoming viewer_db');
-            #if rmdir_return_code != 0 then set return_string = 'ERROR REMOVING INCOMING VIEWER_DB';
-
-            update viewer_instance
-               set viewer_db_path = dest_full_path,
-                   viewer_db_checksum = viewer_db_checksum_in
-              where viewer_instance_uuid = viewer_instance_uuid_in;
-
-            set return_string = 'SUCCESS';
-          end;
-        end if;
-      END;
+      update viewer_instance
+         set viewer_db_path = viewer_db_path_in,
+             viewer_db_checksum = viewer_db_checksum_in,
+             platform_image = platform_image_in,
+             code_dx_version = code_dx_version_in
+        where viewer_instance_uuid = viewer_instance_uuid_in;
+        set return_string = 'SUCCESS';
     else
       set return_string = 'ERROR: Viewer Instance Not Found';
     end if;
@@ -258,7 +209,7 @@ DELIMITER ;
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON viewer_store.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON viewer_store.* TO 'web'@'%';
 
 # 'java_agent'@'%'
 GRANT EXECUTE ON PROCEDURE viewer_store.store_viewer TO 'java_agent'@'%';

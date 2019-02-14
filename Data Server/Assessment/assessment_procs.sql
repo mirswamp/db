@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use assessment;
 
@@ -72,6 +72,8 @@ pkg_ver.language_version,
 pkg_ver.maven_version,
 pkg_ver.android_maven_plugin,
 pkg_ver.exclude_paths,
+pkg_ver.package_build_settings,
+pkg_ver.package_info,
 tool.name as tool_name,
 tool_ver.version_string,
 tool_ver.tool_path,
@@ -124,6 +126,8 @@ pkg_ver.language_version,
 pkg_ver.maven_version,
 pkg_ver.android_maven_plugin,
 pkg_ver.exclude_paths,
+pkg_ver.package_build_settings,
+pkg_ver.package_info,
 mt.name as tool_name,
 mtv.version_string,
 mtv.tool_path,
@@ -806,6 +810,7 @@ DELIMITER $$
 ###############################
 CREATE PROCEDURE insert_results (
     IN execution_record_uuid_in VARCHAR(45),
+    IN assessment_result_uuid_in VARCHAR(45),
     IN result_path_in VARCHAR(200),
     IN result_checksum_in VARCHAR(200),
     IN source_archive_path_in VARCHAR(200),
@@ -821,7 +826,6 @@ CREATE PROCEDURE insert_results (
   BEGIN
     DECLARE metric_return_string VARCHAR(100);
     DECLARE row_count_int int;
-    DECLARE assessment_result_uuid VARCHAR(45);
     DECLARE project_uuid_var VARCHAR(45);
     DECLARE platform_version_uuid_var VARCHAR(45);
     DECLARE tool_version_uuid_var VARCHAR(45);
@@ -834,23 +838,6 @@ CREATE PROCEDURE insert_results (
     DECLARE tool_version_var VARCHAR(100);
     DECLARE package_name_var VARCHAR(100);
     DECLARE package_version_var VARCHAR(100);
-    DECLARE cmd VARCHAR(500);
-    DECLARE result_mkdir_return_code INT;
-    DECLARE result_mv_return_code INT;
-    DECLARE result_chmod_return_code INT;
-    DECLARE source_mv_return_code INT;
-    DECLARE source_chmod_return_code INT;
-    DECLARE log_mkdir_return_code INT;
-    DECLARE log_move_return_code INT;
-    DECLARE log_chmod_return_code INT;
-    DECLARE result_dest_path VARCHAR(200);
-    DECLARE result_filename VARCHAR(200);
-    DECLARE source_archive_filename VARCHAR(200);
-    DECLARE log_dest_path VARCHAR(200);
-    DECLARE log_filename VARCHAR(200);
-    DECLARE result_incoming_dir VARCHAR(200);
-    DECLARE rmdir_return_code INT;
-    DECLARE notify_return_code INT;
     DECLARE run_date_var TIMESTAMP;
     DECLARE execute_node_architecture_id_var VARCHAR(128);
     DECLARE vm_hostname_var VARCHAR(100);
@@ -873,14 +860,6 @@ CREATE PROCEDURE insert_results (
     else
 
     set return_string = 'ERROR';
-    set assessment_result_uuid = uuid();
-
-    # Get filenames from incoming paths
-    set result_filename         = substring_index(result_path_in,'/',-1);
-    set source_archive_filename = substring_index(source_archive_path_in,'/',-1);
-    set log_filename            = substring_index(log_path_in,'/',-1);
-    #set result_incoming_dir     = substring(result_path_in, 1, length(result_path_in) - locate('/',reverse(result_path_in)));
-    set result_incoming_dir     = concat('/swamp/working/results/',execution_record_uuid_in);
 
     # verify exists 1 matching execution_record
     select count(1)
@@ -919,107 +898,46 @@ CREATE PROCEDURE insert_results (
          inner join package_store.package p on p.package_uuid = v.package_uuid
          where package_version_uuid = package_version_uuid_var;
 
-        # Set destination directories
-        set result_dest_path = concat('/swamp/SCAProjects/',project_uuid_var,'/A-Results/',assessment_result_uuid,'/');
-        set log_dest_path    = concat('/swamp/SCAProjects/',project_uuid_var,'/A-Logs/',assessment_result_uuid,'/');
+        insert into assessment_result (
+          assessment_result_uuid, execution_record_uuid, project_uuid, weakness_cnt,
+          file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out, status_out_error_msg,
+          platform_name, platform_version, tool_name, tool_version, package_name, package_version,
+          platform_version_uuid, tool_version_uuid, package_version_uuid,
+          run_date, execute_node_architecture_id, vm_hostname, vm_ip_address)
+        values (
+          assessment_result_uuid_in,   # assessment_result_uuid,
+          execution_record_uuid_in,    # execution_record_uuid,
+          project_uuid_var,            # project_uuid,
+          case weakness_cnt_in when -1 then null else weakness_cnt_in end, # weakness_cnt,
+          'SWAMP',                     # file_host,
+          result_path_in,              # file_path,
+          result_checksum_in,          # checksum,
+          source_archive_path_in,      # source_archive_path,
+          source_archive_checksum_in,  # source_archive_checksum,
+          log_path_in,                 # log_path
+          log_checksum_in,             # log_checksum
+          status_out_in,               # status_out
+          status_out_error_msg_in,     # status_out_error_msg
+          platform_name_var,           # platform_name,
+          platform_version_var,        # platform_version,
+          tool_name_var,               # tool_name,
+          tool_version_var,            # tool_version,
+          package_name_var,            # package_name,
+          package_version_var,         # package_version,
+          platform_version_uuid_var,   # platform_version_uuid,
+          tool_version_uuid_var,       # tool_version_uuid,
+          package_version_uuid_var,     # package_version_uuid
+          run_date_var, execute_node_architecture_id_var, vm_hostname_var, vm_ip_address_var
+          );
 
-        # mkdir for result file and source archive
-        set cmd = null;
-        set cmd = CONCAT('mkdir -p ', result_dest_path);
-        set result_mkdir_return_code = sys_exec(cmd);
-
-        # move result file
-        set cmd = null;
-        set cmd = CONCAT('cp ', result_path_in, ' ', concat(result_dest_path,result_filename));
-        set result_mv_return_code = sys_exec(cmd);
-        set cmd = null;
-        set cmd = CONCAT('chmod 444 ', concat(result_dest_path,result_filename));
-        set result_chmod_return_code = sys_exec(cmd);
-        # Verbose Logging
-          # insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'insert_results_test: chmod result file');
-
-        # move source archive
-        set cmd = null;
-        set cmd = CONCAT('cp ', source_archive_path_in, ' ', concat(result_dest_path,source_archive_filename));
-        set source_mv_return_code = sys_exec(cmd);
-        set cmd = null;
-        set cmd = CONCAT('chmod 444 ', concat(result_dest_path,source_archive_filename));
-        set source_chmod_return_code = sys_exec(cmd);
-        # Verbose Logging
-          # insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'insert_results: chmod source file');
-
-        # mkdir for log file
-        set cmd = null;
-        set cmd = CONCAT('mkdir -p ', log_dest_path);
-        set log_mkdir_return_code = sys_exec(cmd);
-
-        # move log file
-        set cmd = null;
-        set cmd = CONCAT('cp ', log_path_in, ' ', concat(log_dest_path,log_filename));
-        set log_move_return_code = sys_exec(cmd);
-        set cmd = null;
-        set cmd = CONCAT('chmod 444 ', concat(log_dest_path,log_filename));
-        set log_chmod_return_code = sys_exec(cmd);
-
-        # Confirm file moves, then insert result record and return success.
-        if result_mkdir_return_code     != 0 then set return_string = 'ERROR MKDIR RESULT FILE';
-        elseif result_mv_return_code    != 0 then set return_string = 'ERROR MOVING RESULT FILE';
-        elseif result_chmod_return_code != 0 then set return_string = 'ERROR CHMOD RESULT FILE';
-        elseif source_mv_return_code    != 0 then set return_string = 'ERROR MOVING SOURCE FILE';
-        elseif source_chmod_return_code != 0 then set return_string = 'ERROR CHMOD SOURCE FILE';
-        #elseif log_move_return_code     != 0 then set return_string = 'ERROR MOVING LOG FILE';
-        #elseif log_chmod_return_code    != 0 then set return_string = 'ERROR CHMOD LOG FILE';
-        else begin
-            # Note: no longer attempting to remove files from the working directory.
-
-            insert into assessment_result (
-              assessment_result_uuid, execution_record_uuid, project_uuid, weakness_cnt,
-              file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out, status_out_error_msg,
-              platform_name, platform_version, tool_name, tool_version, package_name, package_version,
-              platform_version_uuid, tool_version_uuid, package_version_uuid,
-              run_date, execute_node_architecture_id, vm_hostname, vm_ip_address)
-            values (
-              assessment_result_uuid,      # assessment_result_uuid,
-              execution_record_uuid_in,    # execution_record_uuid,
-              project_uuid_var,            # project_uuid,
-              case weakness_cnt_in when -1 then null else weakness_cnt_in end, # weakness_cnt,
-              'SWAMP',                     # file_host,
-              concat(result_dest_path,result_filename), # file_path,
-              result_checksum_in,          # checksum,
-              concat(result_dest_path,source_archive_filename),     # source_archive_path,
-              source_archive_checksum_in,  # source_archive_checksum,
-              concat(log_dest_path,log_filename),    # log_path
-              log_checksum_in,             # log_checksum
-              status_out_in,               # status_out
-              status_out_error_msg_in,     # status_out_error_msg
-              platform_name_var,           # platform_name,
-              platform_version_var,        # platform_version,
-              tool_name_var,               # tool_name,
-              tool_version_var,            # tool_version,
-              package_name_var,            # package_name,
-              package_version_var,         # package_version,
-              platform_version_uuid_var,   # platform_version_uuid,
-              tool_version_uuid_var,       # tool_version_uuid,
-              package_version_uuid_var,     # package_version_uuid
-              run_date_var, execute_node_architecture_id_var, vm_hostname_var, vm_ip_address_var
-              );
-
-            # Notify user
-            #if (notify_when_complete_flag_var = 1) then
-            #  insert into notification (notification_uuid, user_uuid, notification_impetus, relevant_uuid, transmission_medium)
-            #    values (uuid(), user_uuid_var, 'Assessment result available', assessment_result_uuid, 'EMAIL');
-            #end if;
-
-            if lines_of_code_in is not null then
-              update assessment.execution_record
-                 set code_lines = lines_of_code_in
-                where execution_record_uuid = execution_record_uuid_in;
-            end if;
-
-
-            set return_string = 'SUCCESS';
-          end;
+        if lines_of_code_in is not null then
+          update assessment.execution_record
+             set code_lines = lines_of_code_in
+            where execution_record_uuid = execution_record_uuid_in;
         end if;
+
+
+        set return_string = 'SUCCESS';
       END;
     else
       set return_string = 'ERROR: Record Not Found';
@@ -1656,6 +1574,7 @@ DELIMITER $$
 ## This procedure will pass along any kind of uuid. It doesn't care if it's an A-Run, M-Run, V-Run or bogus.
 CREATE PROCEDURE kill_assessment_run (
     IN execution_record_uuid_in VARCHAR(45),
+    IN hard_kill_flag_in VARCHAR(45),
     OUT return_string varchar(100)
   )
   BEGIN
@@ -1666,6 +1585,7 @@ CREATE PROCEDURE kill_assessment_run (
     set cmd = null;
     set cmd = CONCAT(' /usr/local/bin/kill_run',
                      ifnull(concat(' --execution_record_uuid \'', execution_record_uuid_in,'\''),''),
+                     ifnull(concat(' --hard \'', hard_kill_flag_in,'\''),''),
                      '');
     insert into sys_exec_cmd_log (cmd, caller) values (cmd, 'kill_assessment_run');
     set cmd_return = sys_exec(cmd);
@@ -1937,7 +1857,7 @@ CREATE TRIGGER execution_record_BUPD BEFORE UPDATE ON execution_record FOR EACH 
        and NEW.complete_flag = 0
        then
          set NEW.launch_flag = 0;
-         call assessment.kill_assessment_run (NEW.execution_record_uuid, return_string);
+         call assessment.kill_assessment_run (NEW.execution_record_uuid, 1, return_string);
     end if;
 
 END;
@@ -1995,6 +1915,7 @@ GRANT SELECT, INSERT, UPDATE ON assessment.* TO 'web'@'%';
 GRANT DELETE ON assessment.assessment_run TO 'web'@'%';
 GRANT DELETE ON assessment.run_request TO 'web'@'%';
 GRANT DELETE ON assessment.run_request_schedule TO 'web'@'%';
+GRANT DELETE ON assessment.assessment_run_request TO 'web'@'%';
 GRANT DELETE ON assessment.group_list TO 'web'@'%';
 GRANT DELETE ON assessment.execution_record     TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE assessment.launch_viewer TO 'web'@'%';

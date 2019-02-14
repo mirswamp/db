@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists metric;
@@ -84,8 +84,8 @@ CREATE TABLE metric_run (
   vm_ip_address                VARCHAR(50)                                      COMMENT 'vm ip address',
   vm_image                     VARCHAR(100)                                     COMMENT 'vm image',
   tool_filename                VARCHAR(100)                                     COMMENT 'tool filename',
-  file_host                    VARCHAR(200) NOT NULL                            COMMENT 'host of file',
-  result_path                  VARCHAR(200) NOT NULL                            COMMENT 'cannonical path of result file',
+  file_host                    VARCHAR(200)                                     COMMENT 'host of file',
+  result_path                  VARCHAR(200)                                     COMMENT 'cannonical path of result file',
   result_checksum              VARCHAR(200)                                     COMMENT 'result file checksum',
   log_path                     VARCHAR(200)                                     COMMENT 'cannonical path of log file',
   log_checksum                 VARCHAR(200)                                     COMMENT 'log file checksum',

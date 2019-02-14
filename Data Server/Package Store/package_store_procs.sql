@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use package_store;
 
@@ -29,6 +29,8 @@ DROP TRIGGER IF EXISTS package_type_BUPD;
 DROP TRIGGER IF EXISTS package_version_AINS;
 DROP TRIGGER IF EXISTS package_version_AUPD;
 DROP TRIGGER IF EXISTS package_version_sharing_AINS;
+DROP TRIGGER IF EXISTS package_download_log_BINS;
+DROP TRIGGER IF EXISTS package_download_log_BUPD;
 
 DELIMITER $$
 
@@ -51,6 +53,10 @@ $$
 CREATE TRIGGER package_type_BINS BEFORE INSERT ON package_type FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
 $$
 CREATE TRIGGER package_type_BUPD BEFORE UPDATE ON package_type FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
+$$
+CREATE TRIGGER package_download_log_BINS BEFORE INSERT ON package_download_log FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
+$$
+CREATE TRIGGER package_download_log_BUPD BEFORE UPDATE ON package_download_log FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
 
 CREATE TRIGGER package_BUPD BEFORE UPDATE ON package FOR EACH ROW
@@ -90,56 +96,41 @@ CREATE TRIGGER package_version_AINS AFTER INSERT ON package_version FOR EACH ROW
   BEGIN
     DECLARE assessment_run_uuid_var VARCHAR(45);
     DECLARE run_request_uuid_var VARCHAR(45);
+    DECLARE notify_when_complete_flag_var tinyint(1);
     DECLARE user_uuid_var VARCHAR(45);
     DECLARE return_var VARCHAR(100);
     DECLARE end_of_loop BOOL;
-    DECLARE row_count_int int;
 
     DECLARE cur1 CURSOR FOR
-    select distinct ar.assessment_run_uuid, rr.run_request_uuid, arr.user_uuid
+    select distinct ar.assessment_run_uuid, rr.run_request_uuid, arr.notify_when_complete_flag, arr.user_uuid
       from assessment.assessment_run ar
      inner join assessment.assessment_run_request arr on arr.assessment_run_id = ar.assessment_run_id
      inner join assessment.run_request rr on rr.run_request_id = arr.run_request_id
      where ar.package_uuid = NEW.package_uuid
-       and ar.package_version_uuid is null
+       #and ar.package_version_uuid is null
        and rr.run_request_uuid = 'f18550dd-fdca-11e3-8775-001a4a81450b';
-
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND
         SET end_of_loop = TRUE;
 
-    if upper(NEW.version_sharing_status) = 'PUBLIC' then
-      begin
-
         # if anything in cursor, go thru each record
         OPEN cur1;
         read_loop: LOOP
-          FETCH cur1 INTO assessment_run_uuid_var, run_request_uuid_var, user_uuid_var;
+          FETCH cur1 INTO assessment_run_uuid_var, run_request_uuid_var, notify_when_complete_flag_var, user_uuid_var;
           IF end_of_loop IS TRUE THEN
             LEAVE read_loop;
           END IF;
 
-          # Only create ER if this package version has not already been run with this assessment
-          select count(1)
-            into row_count_int
-            from assessment.execution_record
-           where assessment_run_uuid = assessment_run_uuid_var
-             and package_version_uuid = NEW.package_version_uuid;
-
-          if row_count_int = 0 then
-            call assessment.create_execution_record(assessment_run_uuid_var, run_request_uuid_var, user_uuid_var, return_var);
-          end if;
+          call assessment.create_execution_record(assessment_run_uuid_var, run_request_uuid_var, notify_when_complete_flag_var, user_uuid_var, return_var);
 
         END LOOP;
         CLOSE cur1;
-      end;
-    end if;
 
     # workaround for server bug
     DO (SELECT 'nothing' FROM package WHERE FALSE);
 END;
 $$
-*/
+
 CREATE TRIGGER package_version_AUPD AFTER UPDATE ON package_version FOR EACH ROW
   BEGIN
     DECLARE assessment_run_uuid_var VARCHAR(45);
@@ -244,6 +235,7 @@ CREATE TRIGGER package_version_sharing_AINS AFTER INSERT ON package_version_shar
     DO (SELECT 'nothing' FROM package WHERE FALSE);
 END;
 $$
+*/
 DELIMITER ;
 
 ####################################################
@@ -781,49 +773,15 @@ END
 $$
 DELIMITER ;
 
-drop PROCEDURE if exists download_package;
-DELIMITER $$
-############################################
-CREATE PROCEDURE download_package (
-    IN package_version_uuid_in VARCHAR(45),
-    OUT return_url varchar(200),
-    OUT return_success_flag char(1),
-    OUT return_msg varchar(100)
-  )
-  BEGIN
-    DECLARE row_count_int INT;
-    DECLARE package_path_var VARCHAR(200);
-
-    # verify exists 1 matching record
-    select count(1)
-      into row_count_int
-     from package_version
-     where package_version_uuid = package_version_uuid_in;
-
-    if row_count_int = 1 then
-      BEGIN
-        # get file path
-        select package_path
-          into package_path_var
-         from package_version
-         where package_version_uuid = package_version_uuid_in;
-
-        # call download procedure
-        call assessment.download(package_path_var, return_url, return_success_flag, return_msg);
-
-      END;
-    else set return_success_flag = 'N', return_msg = 'ERROR: RECORD NOT FOUND';
-    end if;
-
-END
-$$
-DELIMITER ;
-
 ###################
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON package_store.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON package_store.* TO 'web'@'%';
+GRANT DELETE ON package_store.package                    TO 'web'@'%';
+GRANT DELETE ON package_store.package_version_dependency TO 'web'@'%';
+GRANT DELETE ON package_store.package_version            TO 'web'@'%';
+GRANT DELETE ON package_store.package_version_sharing    TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.add_package_version TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.store_package_version TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE package_store.list_pkgs_by_project_user TO 'web'@'%';

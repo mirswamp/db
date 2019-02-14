@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 # Insert platform if it doesn't already exist
 select count(1) into @platform_already_exists from platform_store.platform where platform_uuid = 'ee2c1193-209b-11e3-9a3e-001a4a81450b';

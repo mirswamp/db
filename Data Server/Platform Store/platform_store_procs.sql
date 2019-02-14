@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use platform_store;
 
@@ -80,7 +80,9 @@ DELIMITER ;
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON platform_store.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON platform_store.* TO 'web'@'%';
+# GRANT DELETE ON platform_store.platform         TO 'web'@'%';
+# GRANT DELETE ON platform_store.platform_version TO 'web'@'%';
 
 # 'java_agent'@'%'
 GRANT EXECUTE ON PROCEDURE platform_store.select_platform_version TO 'java_agent'@'%';

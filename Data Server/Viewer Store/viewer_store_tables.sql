@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists viewer_store;
@@ -74,6 +74,8 @@ CREATE TABLE viewer_instance (
   proxy_url             VARCHAR(100)                                 COMMENT 'proxy url',
   status_code           INT                                          COMMENT 'status: 0=good nonzero=error',
   status                VARCHAR(100)                                 COMMENT 'status of viewer',
+  platform_image        VARCHAR(100)                                 COMMENT 'vm image',
+  code_dx_version       VARCHAR(100)                                 COMMENT 'version of code dx',
   create_user           VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user           VARCHAR(25)                                  COMMENT 'db user that last updated record',

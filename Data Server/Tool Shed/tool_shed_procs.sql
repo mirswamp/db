@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use tool_shed;
 
@@ -373,7 +373,9 @@ DELIMITER ;
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON tool_shed.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON tool_shed.* TO 'web'@'%';
+# GRANT DELETE ON tool_shed.tool         TO 'web'@'%';
+# GRANT DELETE ON tool_shed.tool_version TO 'web'@'%';
 #GRANT EXECUTE ON PROCEDURE tool_shed.add_tool TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE tool_shed.add_tool_version TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE tool_shed.list_tools_by_project_user TO 'web'@'%';

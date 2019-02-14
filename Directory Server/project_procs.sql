@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use project;
 
@@ -335,7 +335,16 @@ DELIMITER ;
 ## Grants
 
 # 'web'@'%'
-GRANT SELECT, INSERT, UPDATE, DELETE ON project.* TO 'web'@'%';
+GRANT SELECT, INSERT, UPDATE ON project.* TO 'web'@'%';
+GRANT DELETE ON project.admin_invitation   TO 'web'@'%';
+GRANT DELETE ON project.restricted_domains TO 'web'@'%';
+GRANT DELETE ON project.app_passwords      TO 'web'@'%';
+GRANT DELETE ON project.email_verification TO 'web'@'%';
+GRANT DELETE ON project.linked_account     TO 'web'@'%';
+GRANT DELETE ON project.password_reset     TO 'web'@'%';
+GRANT DELETE ON project.class_user         TO 'web'@'%';
+GRANT DELETE ON project.project_invitation TO 'web'@'%';
+GRANT DELETE ON project.project_user       TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.list_projects_by_member TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.remove_user_from_all_projects TO 'web'@'%';
 

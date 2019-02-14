@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists package_store;
@@ -19,6 +19,7 @@ CREATE TABLE package (
   package_language        VARCHAR(200) NULL DEFAULT NULL               COMMENT 'languages package contains',
   package_sharing_status  VARCHAR(25) NOT NULL DEFAULT 'PRIVATE'       COMMENT 'private, shared, public or retired',
   external_url            VARCHAR(2000)                                COMMENT 'external url, eg GitHub',
+  secret_token            VARCHAR(1024)                                COMMENT 'secret token to validate GitHub push requests',
   create_user             VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user             VARCHAR(25)                                  COMMENT 'db user that last updated record',
@@ -61,6 +62,8 @@ CREATE TABLE package_version (
   android_maven_plugin   VARCHAR(255) NULL DEFAULT NULL      COMMENT 'android-maven-plugin',
   checkout_argument      VARCHAR(100) NULL DEFAULT NULL      COMMENT 'git checkout argument',
   exclude_paths          VARCHAR(2000) NULL DEFAULT NULL     COMMENT 'exclude paths',
+  package_build_settings TEXT NULL DEFAULT NULL              COMMENT '.Net info',
+  package_info           TEXT NULL DEFAULT NULL              COMMENT '.Net info',
   create_user            VARCHAR(25)                         COMMENT 'user that inserted record',
   create_date            TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
   update_user            VARCHAR(25)                         COMMENT 'user that last updated record',
@@ -135,3 +138,17 @@ CREATE TABLE package_type (
   update_date                    TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
   PRIMARY KEY (package_type_id)
  )COMMENT='package types';
+
+CREATE TABLE package_download_log (
+  package_download_log_id INT  NOT NULL  AUTO_INCREMENT                COMMENT 'internal id',
+  package_uuid            VARCHAR(45) NOT NULL                         COMMENT 'package uuid',
+  package_version_uuid    VARCHAR(45) NOT NULL                         COMMENT 'version uuid',
+  user_uuid               VARCHAR(45) NOT NULL                         COMMENT 'user download',
+  name                    VARCHAR(100) NOT NULL                        COMMENT 'package name',
+  version_string          VARCHAR(100) NOT NULL                        COMMENT 'eg version 5.0 stable release for Windows 7 64-bit',
+  create_user             VARCHAR(25)                                  COMMENT 'db user that inserted record',
+  create_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+  update_user             VARCHAR(25)                                  COMMENT 'db user that last updated record',
+  update_date             TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+  PRIMARY KEY (package_download_log_id)
+ )COMMENT='contains all packages';

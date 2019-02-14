@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 set @tool_uuid = '50d8714c-b741-11e6-bf70-001a4a81450b';
 set @tool_owner_uuid = '80835e30-d527-11e2-8b8b-0800200c9a66';

@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists assessment;
@@ -39,7 +39,8 @@ CREATE TABLE assessment_run (
 CREATE TABLE run_request (
   run_request_id         INT  NOT NULL AUTO_INCREMENT                 COMMENT 'internal id',
   run_request_uuid       VARCHAR(45) NOT NULL                         COMMENT 'run request uuid',
-  project_uuid           VARCHAR(45) NOT NULL                         COMMENT 'owned by a project',
+  project_uuid           VARCHAR(45) NULL                             COMMENT 'owned by a project, if null then public',
+  hidden_flag            tinyint(1) NOT NULL DEFAULT 0                COMMENT 'hide from UI: 0=false 1=true',
   end_on_date            TIMESTAMP NULL DEFAULT NULL                  COMMENT 'recurance end date, YYYY-MM-DD',
   name                   VARCHAR(25)                                  COMMENT 'name of schedule, monthly',
   description            VARCHAR(100)                                 COMMENT 'desc of schedule, eg Wed & Fri @ 3pm',

@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2018 Software Assurance Marketplace
+# Copyright 2012-2019 Software Assurance Marketplace
 
 use package_store;
 # base install includes no packages
@@ -25,3 +25,4 @@ insert into package_store.package_type (package_type_id, name, package_type_enab
 insert into package_store.package_type (package_type_id, name, package_type_enabled, platform_user_selectable, default_platform_uuid) values (12, 'Java 8 Source Code',       1, 0, '1088c3ce-20aa-11e3-9a3e-001a4a81450b'); # Java 8 Src Code - Ubuntu Linux
 insert into package_store.package_type (package_type_id, name, package_type_enabled, platform_user_selectable, default_platform_uuid) values (13, 'Java 8 Bytecode',          1, 0, '1088c3ce-20aa-11e3-9a3e-001a4a81450b'); # Java 8 Bytecode - Ubuntu Linux
 insert into package_store.package_type (package_type_id, name, package_type_enabled, platform_user_selectable, default_platform_uuid) values (14, 'Web Scripting',            1, 0, '1088c3ce-20aa-11e3-9a3e-001a4a81450b'); # Web Scripting   - Ubuntu Linux
+insert into package_store.package_type (package_type_id, name, package_type_enabled, platform_user_selectable, default_platform_uuid) values (15, '.NET',                     1, 0, '1088c3ce-20aa-11e3-9a3e-001a4a81450b'); # .NET            - Ubuntu Linux
