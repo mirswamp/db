@@ -67,6 +67,7 @@ DROP TRIGGER IF EXISTS permission_BINS;
 DROP TRIGGER IF EXISTS permission_BUPD;
 DROP TRIGGER IF EXISTS user_permission_BINS;
 DROP TRIGGER IF EXISTS user_permission_BUPD;
+DROP TRIGGER IF EXISTS user_permission_BDEL;
 DROP TRIGGER IF EXISTS user_permission_project_BINS;
 DROP TRIGGER IF EXISTS user_permission_project_BUPD;
 DROP TRIGGER IF EXISTS user_permission_package_BINS;
@@ -86,6 +87,7 @@ DROP TRIGGER IF EXISTS class_BINS;
 DROP TRIGGER IF EXISTS class_BUPD;
 DROP TRIGGER IF EXISTS class_user_BINS;
 DROP TRIGGER IF EXISTS class_user_BUPD;
+DROP TRIGGER IF EXISTS class_user_BDEL;
 
 
 DELIMITER $$
@@ -145,6 +147,83 @@ CREATE TRIGGER user_permission_BUPD BEFORE UPDATE ON user_permission FOR EACH RO
   END;
 $$
 
+CREATE TRIGGER user_permission_BDEL BEFORE DELETE ON user_permission FOR EACH ROW
+  BEGIN
+    insert into user_permission_history (user_permission_uid, permission_code, user_uid, user_comment,
+      admin_comment, meta_information, request_date, grant_date, denial_date, expiration_date, delete_date)
+      values (OLD.user_permission_uid, OLD.permission_code, OLD.user_uid, OLD.user_comment,
+      OLD.admin_comment, OLD.meta_information, OLD.request_date, OLD.grant_date, OLD.denial_date, OLD.expiration_date, OLD.delete_date);
+  END;
+$$
+
+CREATE TRIGGER class_user_BINS BEFORE INSERT ON class_user FOR EACH ROW
+  BEGIN
+    #DECLARE commercial_tool_access_var tinyint(1);
+    #DECLARE end_date_var DATETIME;
+    SET NEW.create_user = user(), NEW.create_date = now();
+    # check commercial_tool_access and class end_date
+    #select commercial_tool_access, end_date
+    #  into commercial_tool_access_var, end_date_var
+    #  from project.class where class_code = NEW.class_code;
+    #if commercial_tool_access_var = 1 then
+    if NEW.class_code = 'PSU447SW' then
+      delete from project.user_permission
+       where permission_code = 'codesonar-user'
+         and user_uid = NEW.user_uid;
+      delete from project.user_policy
+       where policy_code = 'codesonar-user-policy'
+         and user_uid = NEW.user_uid;
+      insert into project.user_permission (
+           user_permission_uid,
+           permission_code,
+           user_uid,
+           user_comment,
+           admin_comment,
+           meta_information,
+           request_date,
+           grant_date,
+           expiration_date)
+         values (
+           uuid(), #user_permission_uid,
+           'codesonar-user', #permission_code,
+           NEW.user_uid, #user_uid,
+           'Student in Penn State (PSU), CMPSC 447 Software Security, Dr. Gang (Gary) Tan', #user_comment,
+           'auto-approved for class enrollment', #admin_comment,
+           '{"user_type":"educational","name":"Gang Tan","email":"gangtan@gmail.com","organization":"Penn State University","project_url":"http://www.cse.psu.edu/~gxt29/teaching/cs447s19/index.html"}', #meta_information,
+           now(), #request_date,
+           now(), #grant_date,
+           #end_date_var #expiration_date
+           STR_TO_DATE('10,05,2019 06:00','%d,%m,%Y %H:%i')  #expiration_date
+           );
+      insert into project.user_policy (
+          user_policy_uid,
+          user_uid,
+          policy_code,
+          accept_flag)
+        values (
+          uuid(), #user_policy_uid,
+          NEW.user_uid, #user_uid,
+          'codesonar-user-policy', #policy_code,
+          1 #accept_flag
+          );
+    end if;
+  END;
+$$
+
+CREATE TRIGGER class_user_BDEL BEFORE DELETE ON class_user FOR EACH ROW
+  BEGIN
+    if OLD.class_code = 'PSU447SW' then
+      update project.user_permission
+         set delete_date = now()
+       where permission_code = 'codesonar-user'
+         and user_uid = OLD.user_uid;
+      delete from project.user_policy
+       where policy_code = 'codesonar-user-policy'
+         and user_uid = OLD.user_uid;
+    end if;
+  END;
+$$
+
 #CREATE TRIGGER project_BINS BEFORE INSERT ON project FOR EACH ROW SET NEW.accept_date = now();
 #$$
 CREATE TRIGGER database_version_BINS BEFORE INSERT ON database_version FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
@@ -201,8 +280,8 @@ CREATE TRIGGER class_BINS BEFORE INSERT ON class FOR EACH ROW SET NEW.create_use
 $$
 CREATE TRIGGER class_BUPD BEFORE UPDATE ON class FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
-CREATE TRIGGER class_user_BINS BEFORE INSERT ON class_user FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
-$$
+#CREATE TRIGGER class_user_BINS BEFORE INSERT ON class_user FOR EACH ROW SET NEW.create_user = user(), NEW.create_date = now();
+#$$
 CREATE TRIGGER class_user_BUPD BEFORE UPDATE ON class_user FOR EACH ROW SET NEW.update_user = user(), NEW.update_date = now();
 $$
 
