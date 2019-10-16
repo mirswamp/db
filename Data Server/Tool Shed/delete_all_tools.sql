@@ -3,5 +3,7 @@
 #
 # Copyright 2012-2019 Software Assurance Marketplace
 
-delete from tool_shed.tool;
 delete from tool_shed.tool_version;
+delete from tool_shed.tool;
+delete from metric.metric_tool_version;
+delete from metric.metric_tool;

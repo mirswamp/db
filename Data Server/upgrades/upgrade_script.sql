@@ -240,3 +240,7 @@ drop PROCEDURE if exists assessment.upgrade_59;
 source 60.sql
 call assessment.upgrade_60 ();
 drop PROCEDURE if exists assessment.upgrade_60;
+
+source 61.sql
+call assessment.upgrade_61 ();
+drop PROCEDURE if exists assessment.upgrade_61;

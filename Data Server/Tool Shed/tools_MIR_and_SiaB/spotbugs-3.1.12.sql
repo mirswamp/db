@@ -6,7 +6,7 @@
 set @tool_uuid = 'ed42d79c-ce26-11e7-ad4c-001a4a81450b';
 set @tool_owner_uuid = '80835e30-d527-11e2-8b8b-0800200c9a66';
 set @name = 'SpotBugs';
-set @description = 'SpotBugs is a program which uses static analysis to look for bugs in Java code. <a href="https://spotbugs.github.io/">https://spotbugs.github.io/</a>';
+set @description = 'SpotBugs is a program which uses static analysis to look for bugs in Java code. <a href="https://spotbugs.github.io/">https://spotbugs.github.io/</a> SpotBugs is the spiritual successor of FindBugs, carrying on from the point where it left off with support of its community.';
 set @tool_sharing_status = 'PUBLIC';
 set @policy_code = null;
 set @tool_version_uuid = '7fb41eb3-6784-11e9-919e-001a4a81450b';

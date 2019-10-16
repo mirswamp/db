@@ -9,3 +9,7 @@ delete from tool_shed.tool_version where user_add_on_flag = 0;
 # delete tool if no versions remain
 delete from tool_shed.tool
  where not exists (select * from tool_shed.tool_version tv where tv.tool_uuid = tool.tool_uuid);
+
+# delete metric tools
+delete from metric.metric_tool_version;
+delete from metric.metric_tool;

@@ -361,3 +361,12 @@ CREATE TABLE class_user (
   #,CONSTRAINT class_user_unique UNIQUE (class_code, user_uid)
  ) COMMENT='class-user cross reference';
 
+CREATE TABLE sessions (
+  id varchar(255) NOT NULL,
+  user_id varchar(36) DEFAULT NULL,
+  ip_address varchar(45) DEFAULT NULL,
+  user_agent text,
+  payload text NOT NULL,
+  last_activity int(11) NOT NULL,
+  PRIMARY KEY (id)
+);

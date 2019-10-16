@@ -8,6 +8,35 @@ use assessment;
 ####################
 ## Views
 
+CREATE OR REPLACE VIEW result_grid as
+select pu.user_uid,
+       er.execution_record_uuid, er.assessment_run_uuid, er.status, er.complete_flag, er.create_date,
+       ar.assessment_result_uuid,
+       ar.weakness_cnt,
+       er.project_uuid, proj.full_name as project_name,
+       pkg.package_uuid, ifnull(pkg.name,ar.package_name) as pkg_name,
+       pkg_ver.package_version_uuid, ifnull(pkg_ver.version_string,ar.package_version) as pkg_version_name,
+       tool.tool_uuid, ifnull(tool.name,ar.tool_name) as tool_name,
+       tool_ver.tool_version_uuid, ifnull(tool_ver.version_string,ar.tool_version) as tool_version_name,
+       plat.platform_uuid, ifnull(plat.name,ar.platform_name) as platform_name,
+       plat_ver.platform_version_uuid, ifnull(plat_ver.version_string,ar.platform_version) as platform_version_name,
+       tool.policy_code,
+       case when tool.policy_code is null then 'tool_has_no_policy'
+            when up.user_policy_uid is not null then 'tool_policy_signed'
+            else 'tool_policy_unsigned' end as tool_policy_check,
+       er.vm_hostname, er.vm_username, er.vm_password, er.vm_ip_address
+  from project.project_user pu
+ inner join project.project proj on pu.project_uid = proj.project_uid
+ inner join assessment.execution_record er on er.project_uuid = proj.project_uid and er.delete_date is null
+  left outer join assessment.assessment_result ar on er.execution_record_uuid = ar.execution_record_uuid
+  left outer join package_store.package_version pkg_ver on pkg_ver.package_version_uuid = er.package_version_uuid
+  left outer join package_store.package pkg on pkg.package_uuid = pkg_ver.package_uuid
+  left outer join tool_shed.tool_version tool_ver on tool_ver.tool_version_uuid = er.tool_version_uuid
+  left outer join tool_shed.tool on tool.tool_uuid = tool_ver.tool_uuid
+  left outer join platform_store.platform_version plat_ver on plat_ver.platform_version_uuid = er.platform_version_uuid
+  left outer join platform_store.platform plat on plat.platform_uuid = plat_ver.platform_uuid
+  left outer join project.user_policy up on pu.user_uid = up.user_uid and tool.policy_code = up.policy_code;
+
 CREATE OR REPLACE VIEW assessment_run_events as
   select lower(er.status) as event_type,
          ifnull(er.update_date,er.create_date) event_date,
@@ -529,7 +558,7 @@ CREATE PROCEDURE validate_execution_record (
          and user_uid = user_uuid_var;
       if grant_date_var is null then set return_code = 'Error: need permission to use this tool'; leave sp_label;
       elseif delete_date_var is not null then set return_code = 'Error: permission to use this tool has been revoked'; leave sp_label;
-      elseif (expiration_date_var is null or expiration_date_var < now()) then set return_code = 'Error: permission to use this tool has expired'; leave sp_label;
+      elseif (expiration_date_var is not null and expiration_date_var < now()) then set return_code = 'Error: permission to use this tool has expired'; leave sp_label;
       end if;
     end if;
 
@@ -836,6 +865,7 @@ CREATE PROCEDURE insert_results (
     DECLARE platform_version_var VARCHAR(100);
     DECLARE tool_name_var VARCHAR(100);
     DECLARE tool_version_var VARCHAR(100);
+    DECLARE policy_code_var VARCHAR(100);
     DECLARE package_name_var VARCHAR(100);
     DECLARE package_version_var VARCHAR(100);
     DECLARE run_date_var TIMESTAMP;
@@ -885,8 +915,8 @@ CREATE PROCEDURE insert_results (
          where platform_version_uuid = platform_version_uuid_var;
 
         # lookup tool details
-        select p.name, v.version_string
-          into tool_name_var, tool_version_var
+        select p.name, v.version_string, p.policy_code
+          into tool_name_var, tool_version_var, policy_code_var
           from tool_shed.tool_version v
          inner join tool_shed.tool p on p.tool_uuid = v.tool_uuid
          where tool_version_uuid = tool_version_uuid_var;
@@ -902,7 +932,7 @@ CREATE PROCEDURE insert_results (
           assessment_result_uuid, execution_record_uuid, project_uuid, weakness_cnt,
           file_host, file_path, checksum, source_archive_path, source_archive_checksum, log_path, log_checksum, status_out, status_out_error_msg,
           platform_name, platform_version, tool_name, tool_version, package_name, package_version,
-          platform_version_uuid, tool_version_uuid, package_version_uuid,
+          platform_version_uuid, tool_version_uuid, package_version_uuid, policy_code,
           run_date, execute_node_architecture_id, vm_hostname, vm_ip_address)
         values (
           assessment_result_uuid_in,   # assessment_result_uuid,
@@ -926,7 +956,8 @@ CREATE PROCEDURE insert_results (
           package_version_var,         # package_version,
           platform_version_uuid_var,   # platform_version_uuid,
           tool_version_uuid_var,       # tool_version_uuid,
-          package_version_uuid_var,     # package_version_uuid
+          package_version_uuid_var,    # package_version_uuid
+          policy_code_var,             # policy_code
           run_date_var, execute_node_architecture_id_var, vm_hostname_var, vm_ip_address_var
           );
 

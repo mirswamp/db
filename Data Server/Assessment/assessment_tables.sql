@@ -158,6 +158,7 @@ CREATE TABLE assessment_result (
   tool_version_uuid            VARCHAR(45)                                  COMMENT 'version uuid',
   package_version_uuid         VARCHAR(45)                                  COMMENT 'version uuid',
   tool_uuid                    VARCHAR(45)                                  COMMENT 'tool uuid',
+  policy_code                  VARCHAR(100)                                 COMMENT 'if tool requires policy',
   run_date                     TIMESTAMP    NULL DEFAULT NULL               COMMENT 'run begin timestamp',
   execute_node_architecture_id VARCHAR(128)                                 COMMENT 'execute note id',
   vm_hostname                  VARCHAR(100)                                 COMMENT 'vm ssh hostname',

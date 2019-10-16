@@ -50,6 +50,9 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','16414980-156e-11e3-a239-001a4a81450b',2);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','16414980-156e-11e3-a239-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','16414980-156e-11e3-a239-001a4a81450b',12);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','57a9f78b-acab-11e9-ac7a-001a4a81450b',2);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','57a9f78b-acab-11e9-ac7a-001a4a81450b',6);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','57a9f78b-acab-11e9-ac7a-001a4a81450b',12);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','6a2a40d8-e281-11e6-bf70-001a4a81450b',2);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','6a2a40d8-e281-11e6-bf70-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','6a2a40d8-e281-11e6-bf70-001a4a81450b',12);
@@ -63,6 +66,7 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','d75e97eb-77be-11e7-8228-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('163f2b01-156e-11e3-a239-001a4a81450b','d75e97eb-77be-11e7-8228-001a4a81450b',12);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3309c1e0-b741-11e6-bf70-001a4a81450b','68b0cb72-b741-11e6-bf70-001a4a81450b',14);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3309c1e0-b741-11e6-bf70-001a4a81450b','77bdaf61-dfdb-11e9-ac7a-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('39001e1f-b741-11e6-bf70-001a4a81450b','6ea71506-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3ef639d4-b741-11e6-bf70-001a4a81450b','749d3edd-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3ef639d4-b741-11e6-bf70-001a4a81450b','77fa0b92-6ddd-11e9-919e-001a4a81450b',14);
@@ -73,6 +77,7 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','1fe7faab-b605-11e8-919e-001a4a81450b',1);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','3be08dd0-ce26-11e7-ad4c-001a4a81450b',1);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','53fc0641-e094-11e5-ae56-001a4a81450b',1);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','90214418-ac9e-11e9-ac7a-001a4a81450b',1);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','92e94ec4-bf07-11e5-832a-001a4a81450b',1);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','f24209b3-b604-11e8-919e-001a4a81450b',1);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('50d8714c-b741-11e6-bf70-001a4a81450b','867fa2de-b741-11e6-bf70-001a4a81450b',14);
@@ -110,6 +115,9 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b',2);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','18532f08-6441-11e4-a282-001a4a81450b',12);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','1b1c2e25-ac9f-11e9-ac7a-001a4a81450b',2);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','1b1c2e25-ac9f-11e9-ac7a-001a4a81450b',6);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','1b1c2e25-ac9f-11e9-ac7a-001a4a81450b',12);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','8208695d-ce26-11e7-ad4c-001a4a81450b',2);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','8208695d-ce26-11e7-ad4c-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','8208695d-ce26-11e7-ad4c-001a4a81450b',12);

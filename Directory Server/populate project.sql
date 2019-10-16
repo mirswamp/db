@@ -5,7 +5,7 @@
 
 use project;
 
-insert into database_version (database_version_no, description) values (24, 'setup to v1.33');
+insert into database_version (database_version_no, description) values (26, 'setup to v1.34.5');
 commit;
 
 # linked_account_provider

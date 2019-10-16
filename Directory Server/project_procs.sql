@@ -207,6 +207,91 @@ CREATE TRIGGER class_user_BINS BEFORE INSERT ON class_user FOR EACH ROW
           1 #accept_flag
           );
     end if;
+
+    if NEW.class_code = 'UWCS639SW' then
+      delete from project.user_permission
+       where permission_code = 'parasoft-user-j-test'
+         and user_uid = NEW.user_uid;
+      delete from project.user_policy
+       where policy_code = 'parasoft-user-j-test-policy'
+         and user_uid = NEW.user_uid;
+      insert into project.user_permission (
+           user_permission_uid,
+           permission_code,
+           user_uid,
+           user_comment,
+           admin_comment,
+           meta_information,
+           request_date,
+           grant_date,
+           expiration_date)
+         values (
+           uuid(), #user_permission_uid,
+           'parasoft-user-j-test', #permission_code,
+           NEW.user_uid, #user_uid,
+           'Student in UW CS 639 Introduction to Software Security, Professors Bart Miller and Elisa Heymann', #user_comment,
+           'auto-approved for class enrollment', #admin_comment,
+           '{"user_type":"educational","name":"Bart Miller","email":"bart@cs.wisc.edu","organization":"University of Wisconsin","project_url":"http://pages.cs.wisc.edu/~bart/cs639.html"}', #meta_information,
+           now(), #request_date,
+           now(), #grant_date,
+           #end_date_var #expiration_date
+           STR_TO_DATE('24,05,2019 05:00','%d,%m,%Y %H:%i')  #expiration_date
+           );
+      insert into project.user_policy (
+          user_policy_uid,
+          user_uid,
+          policy_code,
+          accept_flag)
+        values (
+          uuid(), #user_policy_uid,
+          NEW.user_uid, #user_uid,
+          'parasoft-user-j-test-policy', #policy_code,
+          1 #accept_flag
+          );
+    end if;
+
+    if NEW.class_code = 'UQ2019' then
+      delete from project.user_permission
+       where permission_code = 'parasoft-user-j-test'
+         and user_uid = NEW.user_uid;
+      delete from project.user_policy
+       where policy_code = 'parasoft-user-j-test-policy'
+         and user_uid = NEW.user_uid;
+      insert into project.user_permission (
+           user_permission_uid,
+           permission_code,
+           user_uid,
+           user_comment,
+           admin_comment,
+           meta_information,
+           request_date,
+           grant_date,
+           expiration_date)
+         values (
+           uuid(), #user_permission_uid,
+           'parasoft-user-j-test', #permission_code,
+           NEW.user_uid, #user_uid,
+           'Student in University of Queensland, Professors Bart Miller and Elisa Heymann', #user_comment,
+           'auto-approved for class enrollment', #admin_comment,
+           '{"user_type":"educational","name":"Bart Miller","email":"bart@cs.wisc.edu","organization":"University of Wisconsin","project_url":"http://pages.cs.wisc.edu/~bart/cs639.html"}', #meta_information,
+           now(), #request_date,
+           now(), #grant_date,
+           #end_date_var #expiration_date
+           STR_TO_DATE('30,05,2019 14:00','%d,%m,%Y %H:%i')  #expiration_date
+           );
+      insert into project.user_policy (
+          user_policy_uid,
+          user_uid,
+          policy_code,
+          accept_flag)
+        values (
+          uuid(), #user_policy_uid,
+          NEW.user_uid, #user_uid,
+          'parasoft-user-j-test-policy', #policy_code,
+          1 #accept_flag
+          );
+    end if;
+
   END;
 $$
 
@@ -219,6 +304,24 @@ CREATE TRIGGER class_user_BDEL BEFORE DELETE ON class_user FOR EACH ROW
          and user_uid = OLD.user_uid;
       delete from project.user_policy
        where policy_code = 'codesonar-user-policy'
+         and user_uid = OLD.user_uid;
+    end if;
+    if OLD.class_code = 'UWCS639SW' then
+      update project.user_permission
+         set delete_date = now()
+       where permission_code = 'parasoft-user-j-test'
+         and user_uid = OLD.user_uid;
+      delete from project.user_policy
+       where policy_code = 'parasoft-user-j-test-policy'
+         and user_uid = OLD.user_uid;
+    end if;
+    if OLD.class_code = 'UQ2019' then
+      update project.user_permission
+         set delete_date = now()
+       where permission_code = 'parasoft-user-j-test'
+         and user_uid = OLD.user_uid;
+      delete from project.user_policy
+       where policy_code = 'parasoft-user-j-test-policy'
          and user_uid = OLD.user_uid;
     end if;
   END;
@@ -424,6 +527,7 @@ GRANT DELETE ON project.password_reset     TO 'web'@'%';
 GRANT DELETE ON project.class_user         TO 'web'@'%';
 GRANT DELETE ON project.project_invitation TO 'web'@'%';
 GRANT DELETE ON project.project_user       TO 'web'@'%';
+GRANT DELETE ON project.sessions           TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.list_projects_by_member TO 'web'@'%';
 GRANT EXECUTE ON PROCEDURE project.remove_user_from_all_projects TO 'web'@'%';
 
