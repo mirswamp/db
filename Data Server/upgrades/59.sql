@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.33.4
 use assessment;
@@ -29,6 +29,12 @@ CREATE PROCEDURE upgrade_59 ()
           into system_type
           from assessment.system_setting
          where system_setting_code = 'SYSTEM_TYPE';
+
+        if (system_type = 'SWAMP_IN_A_BOX') then
+          # delete sonatype permission & policy - Could have been inserted with a 1.33.3 install of SWAMP-IN-A-BOX
+          delete from project.permission where permission_code = 'sonatype-user';
+          delete from project.policy where policy_code = 'sonatype-user-policy';
+        end if;
 
         # Increase package_version.notes from 200 to 1000
         ALTER TABLE package_store.package_version CHANGE COLUMN notes notes VARCHAR(1000) NULL DEFAULT NULL COMMENT 'Comment visible to users.';

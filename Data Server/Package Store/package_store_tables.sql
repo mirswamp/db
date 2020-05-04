@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # drop and recreate ENTIRE database, including data
 drop database if exists package_store;
@@ -19,6 +19,7 @@ CREATE TABLE package (
   package_language        VARCHAR(200) NULL DEFAULT NULL               COMMENT 'languages package contains',
   package_sharing_status  VARCHAR(25) NOT NULL DEFAULT 'PRIVATE'       COMMENT 'private, shared, public or retired',
   external_url            VARCHAR(2000)                                COMMENT 'external url, eg GitHub',
+  external_url_type       VARCHAR(45)                                  COMMENT 'external url, eg GitHub',
   secret_token            VARCHAR(1024)                                COMMENT 'secret token to validate GitHub push requests',
   create_user             VARCHAR(25)                                  COMMENT 'db user that inserted record',
   create_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',

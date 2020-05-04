@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.34.5
 use assessment;
@@ -50,6 +50,17 @@ CREATE PROCEDURE upgrade_61 ()
                                     else null end;
         end if;
 
+        # New sessions table
+        DROP TABLE IF EXISTS project.sessions;
+        CREATE TABLE project.sessions (
+          id varchar(255) NOT NULL,
+          user_id varchar(36) DEFAULT NULL,
+          ip_address varchar(45) DEFAULT NULL,
+          user_agent text,
+          payload text NOT NULL,
+          last_activity int(11) NOT NULL,
+          PRIMARY KEY (id)
+        );
 
         # update database version number
         delete from assessment.database_version where database_version_no = script_version_no;

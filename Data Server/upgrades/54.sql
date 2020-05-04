@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.30
 use assessment;
@@ -20,6 +20,27 @@ CREATE PROCEDURE upgrade_54 ()
 
     if cur_db_version_no < script_version_no then
       begin
+
+        # system_type
+        if not exists (select * from assessment.system_setting where system_setting_code = 'SYSTEM_TYPE') then
+            insert into assessment.system_setting (system_setting_code, system_setting_value) values ('SYSTEM_TYPE', 'SWAMP_IN_A_BOX');
+        end if;
+        select system_setting_value
+          into system_type
+          from assessment.system_setting
+         where system_setting_code = 'SYSTEM_TYPE';
+
+        # add new table for application passwords
+        CREATE TABLE IF NOT EXISTS project.app_passwords (
+          app_password_id   INT          NOT NULL AUTO_INCREMENT            COMMENT 'internal id',
+          app_password_uuid VARCHAR(45)  NOT NULL                           COMMENT 'app password uuid',
+          user_uid          VARCHAR(127) NOT NULL                           COMMENT 'user uuid',
+          password          VARCHAR(127) NOT NULL                           COMMENT 'password hash',
+          label             VARCHAR(63)                                     COMMENT 'optional label',
+          create_date       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'creation date',
+          update_date       TIMESTAMP    NULL DEFAULT NULL                  COMMENT 'update date',
+          PRIMARY KEY (app_password_id)
+        ) COMMENT='application passwords';
 
         # drop specialized_tool_version table
         drop table if exists tool_shed.specialized_tool_version;

@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.29
 use assessment;
@@ -29,6 +29,15 @@ CREATE PROCEDURE upgrade_53 ()
           into system_type
           from assessment.system_setting
          where system_setting_code = 'SYSTEM_TYPE';
+
+        if (system_type = 'MIR_SWAMP') then
+          # insert GrammaTech CodeSonar permission
+          delete from project.permission where permission_code = 'codesonar-user';
+          insert into project.permission (permission_code, title, description, admin_only_flag, policy_code) values ('codesonar-user', 'CodeSonar User', 'Permission to access and use the CodeSonar static analysis tool for C/C++ from GrammaTech.', 0, 'codesonar-user-policy');
+          # insert GrammaTech policy
+          delete from project.policy where policy_code = 'codesonar-user-policy';
+          insert into project.policy (policy_code, description, policy) values ('codesonar-user-policy', 'GrammaTech CodeSonar EULA', '<div style=\"white-space: pre-wrap;\">\r\n\r\nSOFTWARE END USER LICENCE TERMS\r\n\r\nOpen Source Developers: <a href="https://www.swampinabox.org/doc/eula_codesonar_oss.pdf" target="_blank">https://www.swampinabox.org/doc/eula_codesonar_oss.pdf</a>\r\n\r\nAcademic Users: <a href="https://www.swampinabox.org/doc/eula_codesonar_academic.pdf" target="_blank">https://www.swampinabox.org/doc/eula_codesonar_academic.pdf</a></div>');
+        end if;
 
        # Add column to package table
         if exists (select * from information_schema.columns

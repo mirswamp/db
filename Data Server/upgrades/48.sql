@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.26
 use assessment;
@@ -19,6 +19,9 @@ CREATE PROCEDURE upgrade_48 ()
 
     if cur_db_version_no < script_version_no then
       begin
+
+        # Ensure all membership records have UUID
+        update project.project_user set membership_uid = uuid() where membership_uid is null;
 
         # create table viewer_launch_time_history
         CREATE TABLE viewer_store.viewer_launch_time_history (

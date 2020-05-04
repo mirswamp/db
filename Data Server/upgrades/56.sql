@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 # v1.32
 use assessment;
@@ -29,6 +29,105 @@ CREATE PROCEDURE upgrade_56 ()
           into system_type
           from assessment.system_setting
          where system_setting_code = 'SYSTEM_TYPE';
+
+        # Add column - delete_date
+          # project
+          # project_invitation
+          # user_account
+          # permission
+          # user_permission_project
+          # user_permission_package
+          # policy
+          # user_policy
+          # admin_invitation
+          # email_verification
+          # password_reset
+          # restricted_domains - rename columns
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'project'                 and column_name = 'delete_date') then
+                                                                                         alter table project.project                  drop column delete_date; end if;
+                                                                                         alter TABLE project.project                  add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'project_invitation'      and column_name = 'delete_date') then
+                                                                                         alter table project.project_invitation       drop column delete_date; end if;
+                                                                                         alter TABLE project.project_invitation       add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'user_account'            and column_name = 'delete_date') then
+                                                                                         alter table project.user_account             drop column delete_date; end if;
+                                                                                         alter TABLE project.user_account             add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'permission'              and column_name = 'delete_date') then
+                                                                                         alter table project.permission               drop column delete_date; end if;
+                                                                                         alter TABLE project.permission               add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'user_permission_project' and column_name = 'delete_date') then
+                                                                                         alter table project.user_permission_project  drop column delete_date; end if;
+                                                                                         alter TABLE project.user_permission_project  add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'user_permission_package' and column_name = 'delete_date') then
+                                                                                         alter table project.user_permission_package  drop column delete_date; end if;
+                                                                                         alter TABLE project.user_permission_package  add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'policy'                  and column_name = 'delete_date') then
+                                                                                         alter table project.policy                   drop column delete_date; end if;
+                                                                                         alter TABLE project.policy                   add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'user_policy'             and column_name = 'delete_date') then
+                                                                                         alter table project.user_policy              drop column delete_date; end if;
+                                                                                         alter TABLE project.user_policy              add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'admin_invitation'        and column_name = 'delete_date') then
+                                                                                         alter table project.admin_invitation         drop column delete_date; end if;
+                                                                                         alter TABLE project.admin_invitation         add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'email_verification'      and column_name = 'delete_date') then
+                                                                                         alter table project.email_verification       drop column delete_date; end if;
+                                                                                         alter TABLE project.email_verification       add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns where table_schema = 'project' and table_name = 'password_reset'          and column_name = 'delete_date') then
+                                                                                         alter table project.password_reset           drop column delete_date; end if;
+                                                                                         alter TABLE project.password_reset           add column delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'soft delete';
+        if exists (select * from information_schema.columns
+                    where table_schema = 'project'
+                      and table_name = 'restricted_domains'
+                      and column_name = 'created_at') then
+          ALTER TABLE project.restricted_domains CHANGE COLUMN created_at create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'date created';
+        end if;
+        if exists (select * from information_schema.columns
+                    where table_schema = 'project'
+                      and table_name = 'restricted_domains'
+                      and column_name = 'updated_at') then
+          ALTER TABLE project.restricted_domains CHANGE COLUMN updated_at update_date TIMESTAMP NULL DEFAULT NULL COMMENT 'date updated';
+        end if;
+        if exists (select * from information_schema.columns
+                    where table_schema = 'project'
+                      and table_name = 'restricted_domains'
+                      and column_name = 'deleted_at') then
+          ALTER TABLE project.restricted_domains CHANGE COLUMN deleted_at delete_date TIMESTAMP NULL DEFAULT NULL COMMENT 'date deleted';
+        end if;
+
+        # New class table
+        DROP TABLE IF EXISTS project.class;
+        CREATE TABLE project.class (
+          class_uuid                 VARCHAR(45) NOT NULL                         COMMENT 'uuid',
+          class_code                 VARCHAR(45) NOT NULL                         COMMENT 'class id',
+          description                VARCHAR(500)                                 COMMENT 'description',
+          start_date                 TIMESTAMP NULL DEFAULT NULL                  COMMENT 'class start date',
+          end_date                   TIMESTAMP NULL DEFAULT NULL                  COMMENT 'class end date',
+          commercial_tool_access     tinyint(1) NOT NULL DEFAULT 0                COMMENT '0=false 1=true',
+          create_user                VARCHAR(25)                                  COMMENT 'db user that inserted record',
+          create_date                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+          update_user                VARCHAR(25)                                  COMMENT 'db user that last updated record',
+          update_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+          delete_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
+          PRIMARY KEY (class_uuid),
+          CONSTRAINT class_code_unique UNIQUE (class_code)
+         ) COMMENT='class';
+
+        # New class_user table
+        DROP TABLE IF EXISTS project.class_user;
+        CREATE TABLE project.class_user (
+          class_user_uuid            VARCHAR(45) NOT NULL                         COMMENT 'uuid',
+          class_code                 VARCHAR(45) NOT NULL                         COMMENT 'class id',
+          user_uid                   VARCHAR(45)                                  COMMENT 'user uuid',
+          admin_flag                 tinyint(1) NOT NULL DEFAULT 0                COMMENT 'Is user a class admin: 0=false 1=true',
+          create_user                VARCHAR(25)                                  COMMENT 'db user that inserted record',
+          create_date                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date record inserted',
+          update_user                VARCHAR(25)                                  COMMENT 'db user that last updated record',
+          update_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record last updated',
+          delete_date                TIMESTAMP NULL DEFAULT NULL                  COMMENT 'date record deleted',
+          PRIMARY KEY (class_user_uuid)
+          #,CONSTRAINT class_user_unique UNIQUE (class_code, user_uid)
+         ) COMMENT='class-user cross reference';
 
         # Add column to table
         if exists (select * from information_schema.columns

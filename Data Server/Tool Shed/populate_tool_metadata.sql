@@ -1,7 +1,7 @@
 # This file is subject to the terms and conditions defined in
 # 'LICENSE.txt', which is part of this source code distribution.
 #
-# Copyright 2012-2019 Software Assurance Marketplace
+# Copyright 2012-2020 Software Assurance Marketplace
 
 delete from tool_shed.tool_language;
 delete from tool_shed.tool_platform;
@@ -70,6 +70,7 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('39001e1f-b741-11e6-bf70-001a4a81450b','6ea71506-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3ef639d4-b741-11e6-bf70-001a4a81450b','749d3edd-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3ef639d4-b741-11e6-bf70-001a4a81450b','77fa0b92-6ddd-11e9-919e-001a4a81450b',14);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('3ef639d4-b741-11e6-bf70-001a4a81450b','de77cea5-1d0b-11ea-844c-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('44ec433d-b741-11e6-bf70-001a4a81450b','7a93738b-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4ae25a9c-b741-11e6-bf70-001a4a81450b','808990dd-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('4bb2644d-6440-11e4-a282-001a4a81450b','08f3703b-06b0-11e8-9c91-001a4a81450b',1);
@@ -136,6 +137,7 @@ insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b',2);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b',6);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('6197a593-6440-11e4-a282-001a4a81450b','d08f0ae9-f69b-11e5-ae56-001a4a81450b',12);
+insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('62babae5-b741-11e6-bf70-001a4a81450b','0fe959e8-46b5-11ea-844c-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('62babae5-b741-11e6-bf70-001a4a81450b','9867c824-b741-11e6-bf70-001a4a81450b',14);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('63695cd8-a73e-11e4-a335-001a4a81450b','0a01266d-de92-11e6-bf70-001a4a81450b',5);
 insert into tool_shed.tool_language (tool_uuid, tool_version_uuid, package_type_id) values ('63695cd8-a73e-11e4-a335-001a4a81450b','1ad625bd-71d5-11e5-865f-001a4a81450b',5);
