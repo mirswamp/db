@@ -13,6 +13,6 @@ set @tool_version_uuid = '5230FE76-E658-4B3A-AD40-7D55F7A21955';
 set @version_no = '1';
 set @version_string = '1.1.1';
 set @notes = 'error-prone v1.1.1';
-set @tool_path = '/swamp/store/SCATools/bundled/error-prone-1.1.1-6.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/error-prone-1.1.1-6';
 set @checksum = '29bb34390d8003d66d67c0520add6cd38348a9a2296e6dce01fa326059a061e4ccee157e6ff7204249c0f2a6f9c097a6dd71d76fd8683da6f0f2b051eaee1f49';
 set @user_add_on_flag = 0;

@@ -49,31 +49,6 @@ delete from project.user_policy where policy_code = 'sonatype-user-policy';
 # Disable metric runs
 ALTER EVENT metric.initiate_metric_runs DISABLE; # disables M-Runs
 
-# Set platform not user selectable
-  # By default, swamp in a box only comes with one platform. So, the platform isnt user selectable
-  # If additional platforms are installed, the platform install script changes this flag.
-update package_store.package_type set platform_user_selectable = 0;
-
-# Set Default platforms for package type
-  # All default to Ubuntu Linux (1088c3ce-20aa-11e3-9a3e-001a4a81450b)
-  # except Android (6,11) which defaults to Android (48f9a9b0-976f-11e4-829b-001a4a81450b)
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 1; # C/C++           - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 2; # Java 7 Src Code - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 3; # Java 7 Bytecode - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 4; # Python2         - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 5; # Python3         - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '48f9a9b0-976f-11e4-829b-001a4a81450b' where package_type_id = 6; # Android JavaSrc - Android
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 7; # Ruby            - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 8; # Ruby Sinatra    - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 9; # Ruby on Rails   - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 10;# Ruby Padrino    - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '48f9a9b0-976f-11e4-829b-001a4a81450b' where package_type_id = 11;# Android .apk    - Android
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 12;# Java 8 Src Code - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 13;# Java 8 Bytecode - Ubuntu Linux
-update package_store.package_type set default_platform_uuid = '1088c3ce-20aa-11e3-9a3e-001a4a81450b' where package_type_id = 14;# Web Scripting   - Ubuntu Linux
-update package_store.package_type set package_type_enabled = 0 where package_type_id in (6,11); # Android languages disabled
-update package_store.package_type set platform_user_selectable = 0; # Platform not user selectable for any languages
-
 # system_type
 insert into assessment.system_setting (system_setting_code, system_setting_value) values ('SYSTEM_TYPE', 'SWAMP_IN_A_BOX');
 

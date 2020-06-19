@@ -13,10 +13,5 @@ EXECUTE stmt1;
 
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = 'c88cc88f-1c10-11e8-9c91-001a4a81450b';
-INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
+INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_identifier) VALUES
   ('d95fcb5f-209d-11e3-9a3e-001a4a81450b','c88cc88f-1c10-11e8-9c91-001a4a81450b',3,'7 64-bit','scientific-7.minorversion-64');
-
-# Make Platform user selectable for C/C++ package type
-update package_store.package_type
-   set platform_user_selectable = 1
- where package_type_id = 1;

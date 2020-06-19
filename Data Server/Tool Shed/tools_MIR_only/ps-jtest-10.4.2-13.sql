@@ -13,6 +13,6 @@ set @tool_version_uuid = '1b1c2e25-ac9f-11e9-ac7a-001a4a81450b';
 set @version_no = '8';
 set @version_string = '10.4.2';
 set @notes = 'Parasoft Jtest v10.4.2';
-set @tool_path = '/swamp/store/SCATools/MIR/ps-jtest-10.4.2-13.tar';
+set @tool_path = '/swamp/store/SCATools/MIR/ps-jtest-10.4.2-13';
 set @checksum = '107c0a5ade74d1af2ecf732043b9b0e4cd8bd8a04069543a0a8f3b022b9bbeb55f56e8748ca68256bc8bf76ac5a2ec7b5f1141e51085673767fbca1a7b85cd35';
 set @user_add_on_flag = 0;

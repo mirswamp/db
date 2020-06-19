@@ -13,6 +13,6 @@ set @tool_version_uuid = '0fe959e8-46b5-11ea-844c-001a4a81450b';
 set @version_no = '2';
 set @version_string = '2.0.3';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/bundled/retire-js-2.0.3.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/retire-js-2.0.3';
 set @checksum = 'f318e117f3a859b795e12beaa362b6f79be3cfe0ee3608fe4ab3b8083da338a6fddc159c225cd1f691c679d2de6d046858fd6fe82d3da3ffbe6fa4f8de199f28';
 set @user_add_on_flag = 0;

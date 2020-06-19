@@ -13,6 +13,6 @@ set @tool_version_uuid = '7a78b463-6778-11e9-919e-001a4a81450b';
 set @version_no = '2';
 set @version_string = '2.6.0-swamp';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/bundled/phpmd-2.6.0-swamp.1.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/phpmd-2.6.0-swamp.1';
 set @checksum = '1f6de6593ce16e85742522e8279848e8bd34e350499672716245aeac0c00d4342c1d17b7462f93e0b8da1b73151df6a9eea6aa560846601b31a2e960272ebb5d';
 set @user_add_on_flag = 0;

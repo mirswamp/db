@@ -13,7 +13,7 @@ set @tool_version_uuid = '7fb41eb3-6784-11e9-919e-001a4a81450b';
 set @version_no = '2';
 set @version_string = '3.1.12';
 set @notes = 'Spotbugs v3.1.12';
-set @tool_path = '/swamp/store/SCATools/bundled/spotbugs-3.1.12.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/spotbugs-3.1.12';
 set @checksum = '28167e5f31fd181c592ac05eb3ef7525437a180a46e360c41e36b4bbf7ae3203835073718a28268d18bb1ce403e19f03091f139acf4920d60ef9b4755ca2b7a7';
 set @user_add_on_flag = 0;
 

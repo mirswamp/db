@@ -13,6 +13,6 @@ set @tool_version_uuid = '932a2260-d9d5-11e6-bf70-001a4a81450b';
 set @version_no = '2';
 set @version_string = '3.0.0';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/bundled/php_codesniffer-3.0.0rc2.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/php_codesniffer-3.0.0rc2';
 set @checksum = 'acf48dceb5eea96776c34723da4eca5de42aa64dfe120ed84907cee9ed578c13b0d4e48e96b14ede10e5188fab6401de8e0fc64d58979a5c5f8adfb4fccc834f';
 set @user_add_on_flag = 0;

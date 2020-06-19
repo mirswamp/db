@@ -3,13 +3,22 @@
 #
 # Copyright 2012-2020 Software Assurance Marketplace
 
-# During an upgrade of Swamp in a Box, this script can be used to delete all non-user-installed tools so they can be reinstalled, while leaving user-installed tools untouched.
-delete from tool_shed.tool_version where user_add_on_flag = 0;
+# Delete all tool versions for all bundled tools. Treat deprecated add-on
+# tools the same as bundled tools, because the use no longer has control over
+# their installation.
 
-# delete tool if no versions remain
+delete from tool_shed.tool_version
+where
+  user_add_on_flag = 0
+  or tool_uuid = 'd032d8ec-9184-11e6-88bc-001a4a81450b';  # OWASP Dependency Check
+
+# Delete all tool records for which no versions remain.
+
 delete from tool_shed.tool
- where not exists (select * from tool_shed.tool_version tv where tv.tool_uuid = tool.tool_uuid);
+where not exists
+  (select * from tool_shed.tool_version tv where tv.tool_uuid = tool.tool_uuid);
 
-# delete metric tools
+# Delete all metric tools.
+
 delete from metric.metric_tool_version;
 delete from metric.metric_tool;

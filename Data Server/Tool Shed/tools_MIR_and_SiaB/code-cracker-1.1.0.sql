@@ -13,6 +13,6 @@ set @tool_version_uuid = 'd01c25be-cbf4-11e8-919e-001a4a81450b';
 set @version_no = '1';
 set @version_string = '1.1.0';
 set @notes = 'Code Cracker v1.1.0';
-set @tool_path = '/swamp/store/SCATools/bundled/code-cracker-1.1.0.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/code-cracker-1.1.0';
 set @checksum = 'b3ab271385bf5eeae1efb2bb68719e3a57fd5c6dab26d3c96af9ae19c77f0bd6368f7f22b287d9008fcc0bcdc323d1026cef37eea7914d4cdc8b4c6784f0ab51';
 set @user_add_on_flag = 0;

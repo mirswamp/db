@@ -13,6 +13,6 @@ set @tool_version_uuid = '1e288d3e-de82-11e6-bf70-001a4a81450b';
 set @version_no = '6';
 set @version_string = '1.6.4';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/bundled/pylint-py3-1.6.4.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/pylint-py3-1.6.4';
 set @checksum = 'f78aac13a7b918d55bfcb3c82ceaf009e298e16a300b8bc490f134674b683289e16a1d4e20f283ac3cb3e95322cd73e35c19ab62d754700054401ca677f0e190';
 set @user_add_on_flag = 0;

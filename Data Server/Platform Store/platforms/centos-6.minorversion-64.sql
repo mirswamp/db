@@ -13,10 +13,5 @@ EXECUTE stmt1;
 
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = '1c5cbe39-7c3b-11e6-88bc-001a4a81450b';
-INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
+INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_identifier) VALUES
   ('071890c4-7c3b-11e6-88bc-001a4a81450b','1c5cbe39-7c3b-11e6-88bc-001a4a81450b',2,'6 64-bit','centos-6.minorversion-64');
-
-# Make Platform user selectable for C/C++ package type
-update package_store.package_type
-   set platform_user_selectable = 1
- where package_type_id = 1;

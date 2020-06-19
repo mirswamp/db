@@ -65,7 +65,7 @@ DELIMITER ;
                platform_version.version_string,
                platform_version.comment_public as public_version_comment,
                platform_version.comment_private as private_version_comment,
-               platform_version.platform_path,
+               platform_version.platform_identifier,
                platform_version.checksum,
                platform_version.invocation_cmd,
                platform_version.deployment_cmd

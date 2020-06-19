@@ -13,6 +13,6 @@ set @tool_version_uuid = 'edef671e-7b79-11e6-88bc-001a4a81450b';
 set @version_no = '9';
 set @version_string = '1.75';
 set @notes = 'Cppcheck 1.75';
-set @tool_path = '/swamp/store/SCATools/bundled/cppcheck-1.75-2.tar';
+set @tool_path = '/swamp/store/SCATools/bundled/cppcheck-1.75-2';
 set @checksum = '61a29eda258434163bc4b7b7c4fb59cc13dfa102d3687d08da03a5e9587c63d85bd339bfe8026c5f7574559b7f51d17df119df42f149a87b6f47be5bdc9999e8';
 set @user_add_on_flag = 0;

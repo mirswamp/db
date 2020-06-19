@@ -107,7 +107,7 @@ tool.name as tool_name,
 tool_ver.version_string,
 tool_ver.tool_path,
 tool_ver.checksum as tool_checksum,
-plt_ver.platform_path,
+plt_ver.platform_identifier,
 pvd.dependency_list,
 case when tool_ver.tool_version_uuid = 'a6d2a89e-4a1c-11e7-a337-001a4a81450b'
      then (select up.meta_information from project.user_permission up where up.user_uid = er.user_uuid and up.permission_code = 'sonatype-user')
@@ -161,7 +161,7 @@ mt.name as tool_name,
 mtv.version_string,
 mtv.tool_path,
 mtv.checksum as tool_checksum,
-plt_ver.platform_path,
+plt_ver.platform_identifier,
 pvd.dependency_list,
 null as user_cnf,
 0 as notify_when_complete_flag
@@ -1066,6 +1066,7 @@ CREATE PROCEDURE launch_viewer (
     IN viewer_version_uuid_in VARCHAR(45),
     IN project_uuid_in VARCHAR(45),
     IN destination_base_path_in VARCHAR(45),
+	IN results_type_in VARCHAR(45),
     OUT return_path varchar(200),
     OUT return_string varchar(100),
     OUT viewer_instance_uuid_out varchar(45)
@@ -1193,7 +1194,7 @@ CREATE PROCEDURE launch_viewer (
               set cmd = null;
               set cmd = CONCAT(' /usr/local/bin/launch_viewer',
                                ' --viewer_name \'Native\'',
-                               #ifnull(concat(' --tool_name \'', tool_name_var,'\''),''),
+                               ifnull(concat(' --results_type \'', results_type_in,'\''),''),
                                ifnull(concat(' --package_type \'', package_type_id_var,'\''),''),
                                ifnull(concat(' --file_path \'', result_file_full_source_path,'\''),''),
                                ifnull(concat(' --outdir \'', destination_base_path_in, assessment_result_uuid_in,'\''),''),

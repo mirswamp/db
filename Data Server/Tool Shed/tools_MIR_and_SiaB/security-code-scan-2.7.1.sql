@@ -13,6 +13,6 @@ set @tool_version_uuid = '6f2981fa-cbf7-11e8-919e-001a4a81450b';
 set @version_no = '1';
 set @version_string = '2.7.1';
 set @notes = 'Security Code Scan 2.7.1';
-set @tool_path = '/swamp/store/SCATools/bundled/security-code-scan-2.7.1.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/security-code-scan-2.7.1';
 set @checksum = '8afefe96117ad9f504296463158887061b4c0009402751c8b97a7a5046802c34da29338f3247f2d3e4d3fbb57c4fb6e2cdccfb415f4f9209f550c23f57cee993';
 set @user_add_on_flag = 0;

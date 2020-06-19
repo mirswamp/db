@@ -13,6 +13,6 @@ set @tool_version_uuid = '57a9f78b-acab-11e9-ac7a-001a4a81450b';
 set @version_no = '7';
 set @version_string = '6.14.0';
 set @notes = 'PMD v6.14.0';
-set @tool_path = '/swamp/store/SCATools/bundled/pmd-6.14.0.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/pmd-6.14.0';
 set @checksum = '95b7c2282508cfd3942adfd4dcc4953c540df166b985f4266f121be8577dcc83e016b061b7de5cfce70125058d1ae2b349554e512e6d0244b244ea87ecf6b53e';
 set @user_add_on_flag = 0;

@@ -13,6 +13,6 @@ set @tool_version_uuid = 'ac6ff3bf-a255-11e9-ac7a-001a4a81450b';
 set @version_no = '3';
 set @version_string = '1.82';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/bundled/cloc-1.82.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/cloc-1.82';
 set @checksum = '0f2437198752572527de577b1752aed6cf5eb46c650b9576ae361c88e82121aee4f5d8f58112677c20dec918c61fcb52a8d51ac9b46938f0b10e346edec34094';
 set @metric_tool = 'Y';

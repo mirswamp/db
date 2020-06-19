@@ -30,7 +30,7 @@ CREATE TABLE platform_version (
   retire_date            TIMESTAMP NULL DEFAULT NULL         COMMENT 'date version is retired',
   comment_public         VARCHAR(200)                        COMMENT 'Comment visible to users.',
   comment_private        VARCHAR(200)                        COMMENT 'comment for platform owner and admins only',
-  platform_path          VARCHAR(200)                        COMMENT 'cannonical path of platform',
+  platform_identifier    VARCHAR(200)                        COMMENT 'pointer to platform',
   checksum               VARCHAR(200)                        COMMENT 'checksum of platform',
   invocation_cmd         VARCHAR(200)                        COMMENT 'command to invoke platform',
   deployment_cmd         VARCHAR(200)                        COMMENT 'command to deploy platform',

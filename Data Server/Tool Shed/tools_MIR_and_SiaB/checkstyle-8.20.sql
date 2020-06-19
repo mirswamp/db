@@ -13,6 +13,6 @@ set @tool_version_uuid = '4bd668fc-6ddd-11e9-919e-001a4a81450b';
 set @version_no = '6';
 set @version_string = '8.20';
 set @notes = 'Checkstyle v8.20';
-set @tool_path = '/swamp/store/SCATools/bundled/checkstyle-8.20.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/checkstyle-8.20';
 set @checksum = 'd1338fe3533cfec013aaccd4cefa17c8e9ba80ba77c4f276988e48aba36646ddfcd92ec59f174e2aa6f7a54de2170832e39d737ae8a90f26a5079af8fc7f8923';
 set @user_add_on_flag = 0;

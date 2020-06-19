@@ -13,6 +13,6 @@ set @tool_version_uuid = '68f4a0c7-72b2-11e5-865f-001a4a81450b';
 set @version_no = '1';
 set @version_string = '4.4';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/MIR/gt-csonar-4.4p0-2.tar';
+set @tool_path = '/swamp/store/SCATools/MIR/gt-csonar-4.4p0-2';
 set @checksum = '1b7bae442551e00c10165d4740c1955476e293600a9dd83c2f0547d6ae8adb3d4bdcbc6d7c0c85880ffcbcbe9e0fa85ed1ab699b92637093894e0ac3b95a9f5d';
 set @user_add_on_flag = 0;

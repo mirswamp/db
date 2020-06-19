@@ -13,13 +13,5 @@ EXECUTE stmt1;
 
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = '8f4878ec-976f-11e4-829b-001a4a81450b';
-INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
+INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_identifier) VALUES
   ('48f9a9b0-976f-11e4-829b-001a4a81450b','8f4878ec-976f-11e4-829b-001a4a81450b',1,'Android on Ubuntu 12.04 64-bit','android-ubuntu-12.04-64');
-
-# Make Platform user selectable for C/C++ package type
-  # Note: android ubuntu is not a C platform. So, we do not make the platform user selectable.
-
-# Enable Android Package Types
-update package_store.package_type
-   set package_type_enabled = 1
- where package_type_id in (6,11);

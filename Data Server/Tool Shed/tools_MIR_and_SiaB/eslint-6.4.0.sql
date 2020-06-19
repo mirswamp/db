@@ -13,6 +13,6 @@ set @tool_version_uuid = '77bdaf61-dfdb-11e9-ac7a-001a4a81450b';
 set @version_no = '2';
 set @version_string = '6.4.0';
 set @notes = '';
-set @tool_path = '/swamp/store/SCATools/bundled/eslint-6.4.0.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/eslint-6.4.0';
 set @checksum = 'f8c8930d405e2c36e5187158b0ff2ec8da2e0810ec3eb2b95a670f13d8afc150f8b3c724433d02880969a12f751355c75ac412476f02a2227fa5662c4bdb3854';
 set @user_add_on_flag = 0;

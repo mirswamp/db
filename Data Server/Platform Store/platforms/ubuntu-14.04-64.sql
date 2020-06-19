@@ -13,10 +13,5 @@ EXECUTE stmt1;
 
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = 'fd924363-7c40-11e6-88bc-001a4a81450b';
-INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
+INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_identifier) VALUES
   ('1088c3ce-20aa-11e3-9a3e-001a4a81450b','fd924363-7c40-11e6-88bc-001a4a81450b',3,'14.04 64-bit', 'ubuntu-14.04-64');
-
-# Make Platform user selectable for C/C++ package type
-update package_store.package_type
-   set platform_user_selectable = 1
- where package_type_id = 1;

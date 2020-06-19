@@ -13,5 +13,5 @@ EXECUTE stmt1;
 
 # Platform Version
 delete from platform_store.platform_version where platform_version_uuid = '03b18efe-7c41-11e6-88bc-001a4a81450b';
-INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_path) VALUES
+INSERT INTO platform_store.platform_version (platform_uuid, platform_version_uuid, version_no, version_string, platform_identifier) VALUES
   ('1088c3ce-20aa-11e3-9a3e-001a4a81450b','03b18efe-7c41-11e6-88bc-001a4a81450b',4,'16.04 64-bit',     'ubuntu-16.04-64');

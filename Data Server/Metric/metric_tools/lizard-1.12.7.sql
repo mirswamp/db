@@ -13,6 +13,6 @@ set @tool_version_uuid = '3bd56e00-de98-11e6-bf70-001a4a81450b';
 set @version_no = '2';
 set @version_string = '1.12.7';
 set @comment_public = '';
-set @tool_path = '/swamp/store/SCATools/bundled/lizard-1.12.7.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/lizard-1.12.7';
 set @checksum = 'b71c323e52b5bf665b9b0596bc709da3ec82c0c64c3836148f987b704947fbb5bea892a30e712533391168fc061a61b7e76d7e554a2103a4b507bf2c620b7fb7';
 set @metric_tool = 'Y';

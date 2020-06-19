@@ -13,6 +13,6 @@ set @tool_version_uuid = '2f314dde-2069-11e7-be48-001a4a81450b';
 set @version_no = '2';
 set @version_string = '0.1.5';
 set @notes = 'Android Lint 0.1.5';
-set @tool_path = '/swamp/store/SCATools/bundled/android-lint-0.1.5.tar.gz';
+set @tool_path = '/swamp/store/SCATools/bundled/android-lint-0.1.5';
 set @checksum = '3b6fb1cd7ad99d7da88d9c3fe7103bcd941ab5c0f69596fdda7c0053165958ff9a0240dd9cfad7224afb57b2445b54ae89f586dae9119c89e4c3b05ee11257ec';
 set @user_add_on_flag = 0;

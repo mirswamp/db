@@ -13,6 +13,6 @@ set @tool_version_uuid = '90214418-ac9e-11e9-ac7a-001a4a81450b';
 set @version_no = '8';
 set @version_string = '10.4.2';
 set @notes = 'Parasoft C/C++test v10.4.2';
-set @tool_path = '/swamp/store/SCATools/MIR/ps-ctest-10.4.2-2.tar';
+set @tool_path = '/swamp/store/SCATools/MIR/ps-ctest-10.4.2-2';
 set @checksum = '73e22907c1fded1d54417f3fd12c75734b88c19da21aaa581085d3fef982f725d878952f5077674a6f3c88decb27878610d3c1ae12d4f6904d9999ae3ce640fc';
 set @user_add_on_flag = 0;
